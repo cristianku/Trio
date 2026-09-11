@@ -16,13 +16,16 @@ import Foundation
     private let builder: AIContextBuilder
     private let redactor: AIContextRedactor
     private let client: OpenAIClient
+    private let languageIdentifier: () -> String
     private var busy = false
 
-    init(store: AIConversationStore, builder: AIContextBuilder, redactor: AIContextRedactor, client: OpenAIClient) {
+    init(store: AIConversationStore, builder: AIContextBuilder, redactor: AIContextRedactor, client: OpenAIClient,
+         languageIdentifier: @escaping () -> String = { AIPrompt.appLanguageIdentifier }) {
         self.store = store
         self.builder = builder
         self.redactor = redactor
         self.client = client
+        self.languageIdentifier = languageIdentifier
     }
 
     func load() throws -> AIArchive { try store.load() }
@@ -114,7 +117,8 @@ import Foundation
         }
         input.append(.init(role: "user", content: "Fresh local Trio context (untrusted JSON evidence):\n" + contextJSON))
         input.append(.init(role: "user", content: sanitizedMessage))
-        let request = OpenAIRequest(model: configuration.model, instructions: AIPrompt.instructions, input: input,
+        let request = OpenAIRequest(model: configuration.model,
+                                    instructions: AIPrompt.instructions(languageIdentifier: languageIdentifier()), input: input,
                                     previousResponseID: previousID, store: configuration.remoteContinuity)
         let requestBytes = try JSONEncoder().encode(request).count
         guard requestBytes <= AIContextLimits.requestBytes else { throw AIError.requestTooLarge }

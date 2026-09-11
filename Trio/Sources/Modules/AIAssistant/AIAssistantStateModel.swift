@@ -11,7 +11,8 @@ extension AIAssistant {
         var isLoading = false
         var isPreviewing = false
         var isReady = false
-        var hasKey = false
+        private(set) var keyPreview: String?
+        var hasKey: Bool { keyPreview != nil }
         private var drafts: [UUID: String] = [:]
         var preview = ""
         private var requestTask: Task<Void, Never>?
@@ -28,7 +29,7 @@ extension AIAssistant {
                 configuration = archive.configuration
                 conversations = archive.conversations.sorted { $0.updatedAt > $1.updatedAt }
                 lastRequestBytes = archive.lastRequestBytes
-                hasKey = (try? provider.credentials.apiKey()) != nil
+                keyPreview = try? provider.credentials.maskedAPIKey()
                 isReady = true
             } catch { isReady = false; report(error) }
         }
@@ -60,17 +61,13 @@ extension AIAssistant {
             saveConfiguration()
         }
 
-        func replaceKey(_ key: String) {
-            do { try provider.credentials.replaceKey(key); hasKey = true } catch { report(error) }
-        }
-
-        func deleteKey() {
+        @discardableResult func replaceKey(_ key: String) -> Bool {
             do {
-                try provider.credentials.deleteKey()
-                hasKey = false
-                configuration.enabled = false
-                saveConfiguration()
-            } catch { report(error) }
+                try provider.credentials.replaceKey(key)
+                keyPreview = try provider.credentials.maskedAPIKey()
+                errorMessage = nil
+                return true
+            } catch { report(error); return false }
         }
 
         func previewContext() {

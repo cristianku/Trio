@@ -25,11 +25,25 @@ Local conversations are authoritative. Default requests use `store: false` and b
 
 API schema references: https://developers.openai.com/api/docs/guides/conversation-state and https://developers.openai.com/api/reference/resources/responses/methods/create . Instructions are sent on every turn, including chained turns.
 
+Replies default to short, friendly explanations for a person unfamiliar with glucose management or Trio: roughly 60–100 words,
+at most three relevant points, no tables or complete settings inventories unless requested. Broad settings reviews explain a few
+observations and offer one non-treatment next step or focused question. Evidence and dosing restrictions still apply; the prompt
+asks for only the limitations relevant to the answer and does not treat an override target difference as an error by itself.
+`AIPrompt` reads the app's effective language from `Bundle.main.preferredLocalizations` (development language, then English as
+fallback) and adds its language name and identifier to the instructions on every send. This follows Trio's language, including the
+iOS per-app language selection, rather than guessing from the question, region, logs or earlier replies. No separate AI language
+setting is stored. Brevity and response language are model instructions, not post-processing or a guarantee of generated wording.
+
 Disk is the throwing persistence primitive already used by FileStorage. AI uses it directly so failed or corrupt conversation writes cannot be silently treated as success; no new database is introduced. Credentials are excluded from all Codable configuration and archive types.
 
 ## Using the assistant
 
-Open **Settings → Features → AI Assistant → AI Settings** (also searchable as “AI Assistant” or “OpenAI”). Save/replace the key in the masked **OpenAI API Key** field. The saved value is never displayed. The default model is `gpt-4.1-mini`, defined once in `AIPrompt`; enter another Responses-compatible model ID and tap **Save Model** to change it. Model availability depends on the API account. Reference: https://developers.openai.com/api/docs/models/gpt-4.1-mini .
+The Home screen also has a speech-bubble shortcut at the lower right, beside the information/statistics panel and above the tab bar.
+It opens the existing conversations screen in a sheet with its own navigation and a Close button. The shortcut has a dedicated
+52-point touch target, keeps the dashboard's existing vertical layout, and is available before setup so users can reach AI Settings.
+Opening it does not send a request or enable AI. The original Settings → Features → AI Assistant entry remains available.
+
+Open **Settings → Features → AI Assistant → AI Settings** (also searchable as “AI Assistant” or “OpenAI”). Enter the key in the secure **OpenAI API Key** field; finishing editing or leaving the screen saves it automatically. A saved key replaces the input with a masked preview showing only its first ten and last four characters (short values are fully masked). Tap the preview to enter a replacement; an empty replacement keeps the current key, and a failed write leaves the saved key and preview intact. The full saved value is never placed in a text field or archive. There are no Save, Replace, or Delete buttons. The default model is `gpt-4.1-mini`, defined in `AIPrompt`. The **Model** picker offers GPT-4.1 Mini, GPT-5.6 Luna, GPT-5.6 Terra, GPT-5.6 Sol, and GPT-6 Astra; choosing a preset saves it immediately. Choose **Custom Model** to enter another Responses-compatible model ID, which saves when editing ends or the screen closes. Existing custom IDs remain editable. This is a built-in list, not a live query of account permissions; model availability depends on the API project. Reference: https://developers.openai.com/api/docs/models .
 
 Review **Data Sharing**, tap **I Agree**, enable the assistant and choose the data categories. All categories initially remain off; the window defaults to 6 hours, with 1/3/6/12/24 hours available. Preview AI Context does not send a request and can be used before enabling the feature. New Chat creates a local conversation. Reopen it from Conversations; use its context menu to rename/delete, or swipe to delete locally. The composer supports multiple lines, cancellation and per-conversation in-memory drafts. **Select Therapy Context** selects settings, glucose, recorded insulin, carbs, determinations, overrides and temporary targets in one action; it does not enable the assistant or accept consent. Logs remain optional.
 

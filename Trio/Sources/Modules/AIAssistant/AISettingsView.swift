@@ -3,10 +3,36 @@ import SwiftUI
 struct AISettingsView: View {
     @Bindable var state: AIAssistant.StateModel
     @State private var replacementKey = ""
+    @State private var isEditingKey = false
     @State private var model = ""
+    @State private var showCustomModel = false
     @State private var showConsent = false
+    @FocusState private var focusedField: Field?
     @Environment(\.colorScheme) private var colorScheme
     @Environment(AppState.self) private var appState
+
+    private enum Field: Hashable { case key, model }
+
+    private let models: [(id: String, name: String)] = [
+        ("gpt-4.1-mini", "GPT-4.1 Mini"),
+        ("gpt-5.6-luna", "GPT-5.6 Luna"),
+        ("gpt-5.6-terra", "GPT-5.6 Terra"),
+        ("gpt-5.6-sol", "GPT-5.6 Sol"),
+        ("gpt-6-astra", "GPT-6 Astra")
+    ]
+
+    private var modelSelection: Binding<String> {
+        Binding(get: {
+            !showCustomModel && models.contains { $0.id == state.configuration.model } ? state.configuration.model : "custom"
+        }, set: { selection in
+            guard selection != "custom" else { model = state.configuration.model; showCustomModel = true; return }
+            state.configuration.model = selection
+            state.saveConfiguration()
+            model = state.configuration.model
+            showCustomModel = false
+            focusedField = nil
+        })
+    }
 
     var body: some View {
         Form {
@@ -16,16 +42,8 @@ struct AISettingsView: View {
             } footer: {
                 Text("Read-only and experimental. Selected medical data and conversation messages are sent to OpenAI only when you press Send.")
             }.listRowBackground(Color.chart)
-            Section("OpenAI API Key") {
-                Text(state.hasKey ? "Key saved in Keychain" : "No key saved").foregroundStyle(.secondary)
-                SecureField("New or replacement API key", text: $replacementKey)
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    .privacySensitive()
-                Button("Save / Replace Key") { state.replaceKey(replacementKey); replacementKey = "" }.disabled(replacementKey.isEmpty)
-                Button("Delete Key", role: .destructive) { state.deleteKey(); replacementKey = "" }.disabled(!state.hasKey)
-                TextField("Model ID", text: $model).textInputAutocapitalization(.never).autocorrectionDisabled()
-                Button("Save Model") { state.configuration.model = model; state.saveConfiguration(); model = state.configuration.model }
-            }.listRowBackground(Color.chart)
+            keySection
+            modelSection
             Section("Context for Each Message") {
                 Button("Select Therapy Context") {
                     state.configuration.selectTherapyContext()
@@ -62,7 +80,15 @@ struct AISettingsView: View {
         .background(appState.trioBackgroundColor(for: colorScheme))
         .navigationTitle("AI Settings")
         .onAppear { model = state.configuration.model }
-        .onDisappear { replacementKey = "" }
+        .onChange(of: focusedField) { oldField, _ in
+            if oldField == .key { savePendingKey() }
+            if oldField == .model { savePendingModel() }
+        }
+        .onDisappear {
+            savePendingKey()
+            savePendingModel()
+            replacementKey = ""
+        }
         .sheet(isPresented: $showConsent) {
             NavigationStack {
                 ScrollView { Text(AIPrompt.consent).padding() }
@@ -73,6 +99,82 @@ struct AISettingsView: View {
                     }
             }
         }
+    }
+
+    private var keySection: some View {
+        Section("OpenAI API Key") {
+            if let preview = state.keyPreview, !isEditingKey {
+                Button {
+                    replacementKey = ""
+                    isEditingKey = true
+                } label: {
+                    HStack {
+                        Text(verbatim: preview).monospaced()
+                        Spacer()
+                        Image(systemName: "pencil").foregroundStyle(.secondary)
+                    }
+                }
+                .accessibilityLabel("API key, \(preview)")
+                .accessibilityHint("Double tap to enter a replacement key")
+                .privacySensitive()
+            } else {
+                SecureField("API key", text: $replacementKey)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .keyboardType(.asciiCapable)
+                    .submitLabel(.done)
+                    .focused($focusedField, equals: .key)
+                    .privacySensitive()
+                    .onAppear { if isEditingKey { focusedField = .key } }
+                    .onSubmit {
+                        savePendingKey()
+                        focusedField = nil
+                    }
+            }
+        }.listRowBackground(Color.chart)
+    }
+
+    private var modelSection: some View {
+        Section {
+            Picker("Model", selection: modelSelection) {
+                ForEach(models, id: \.id) { option in Text(option.name).tag(option.id) }
+                Text("Custom Model").tag("custom")
+            }
+            if showCustomModel || !models.contains(where: { $0.id == state.configuration.model }) {
+                TextField("Model ID", text: $model)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .submitLabel(.done)
+                    .focused($focusedField, equals: .model)
+                    .onSubmit {
+                        savePendingModel()
+                        focusedField = nil
+                    }
+            }
+        } header: {
+            Text("Model")
+        } footer: {
+            Text("Model availability depends on your OpenAI project. Pricing varies by model.")
+        }.listRowBackground(Color.chart)
+    }
+
+    private func savePendingKey() {
+        guard !replacementKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            replacementKey = ""
+            isEditingKey = false
+            return
+        }
+        if state.replaceKey(replacementKey) {
+            replacementKey = ""
+            isEditingKey = false
+        }
+    }
+
+    private func savePendingModel() {
+        let value = model.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !value.isEmpty, value != state.configuration.model {
+            state.configuration.model = value
+            state.saveConfiguration()
+        }
+        model = state.configuration.model
     }
 
     private func setting<Value>(_ keyPath: WritableKeyPath<AIConfiguration, Value>) -> Binding<Value> {

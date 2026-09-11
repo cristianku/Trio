@@ -6,6 +6,14 @@ protocol AICredentialProvider {
     func deleteKey() throws
 }
 
+extension AICredentialProvider {
+    func maskedAPIKey() throws -> String {
+        let value = try apiKey()
+        guard value.count > 18 else { return "••••••••" }
+        return "\(value.prefix(10))…\(value.suffix(4))"
+    }
+}
+
 final class KeychainAICredentialProvider: AICredentialProvider {
     static let key = "AIAssistant.OpenAI.apiKey"
     private let keychain: Keychain

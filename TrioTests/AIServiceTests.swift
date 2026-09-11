@@ -5,6 +5,30 @@ import Swinject
 @testable import Trio
 
 @Suite("AI service consent and continuity", .serialized) @MainActor struct AIServiceTests {
+    @Test("Each request uses the current app language, including remote conversation continuations",
+          arguments: [false, true])
+    func responseLanguage(remoteContinuity: Bool) async throws {
+        let store = MemoryAIStore()
+        let client = AIClientFixture()
+        var appLanguage = "it"
+        let service = DefaultAIService(store: store, builder: AIBuilderFixture(), redactor: DefaultAIContextRedactor(),
+                                       client: client, languageIdentifier: { appLanguage })
+        var config = AIConfiguration()
+        config.enabled = true
+        config.consentVersion = AIPrompt.consentVersion
+        config.remoteContinuity = remoteContinuity
+        try service.updateConfiguration(config)
+        let chat = try service.newConversation()
+        _ = try await service.send("Please check Trio settings", conversationID: chat.id)
+        #expect(client.requests[0].instructions.contains("Response language: Italian (it)."))
+        appLanguage = "pl"
+        _ = try await service.send("Controlla le impostazioni", conversationID: chat.id)
+        #expect(client.requests[1].instructions.contains("Response language: Polish (pl)."))
+        #expect(!client.requests[1].instructions.contains("Response language: Italian (it)."))
+        #expect(client.requests[1].previousResponseID == (remoteContinuity ? "resp_test" : nil))
+        #expect(client.requests[1].instructions.contains("Do not give personalized dosing instructions."))
+    }
+
     @Test("Disabled and unconsented requests never reach network") func consent() async throws {
         let store = MemoryAIStore()
         let client = AIClientFixture()

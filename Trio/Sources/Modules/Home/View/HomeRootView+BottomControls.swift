@@ -783,7 +783,24 @@ extension Home.RootView {
         ))
     }
 
-    /// Bottom-anchored fixed zone: adjustment/bolus panel above the stats banner.
+    private var aiChatButton: some View {
+        Button {
+            showAIChats = true
+        } label: {
+            Image(systemName: "bubble.left.and.bubble.right.fill")
+                .font(.system(size: 22, weight: .medium))
+                .foregroundStyle(Color.tabBar)
+                .frame(width: 52, height: 52)
+                .glassMaterialFill(Circle())
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("AI Assistant"))
+        .accessibilityHint(Text("Opens AI conversations"))
+        .accessibilityIdentifier("home.aiChats")
+    }
+
+    /// Bottom-anchored fixed zone: adjustment/bolus panel above the banner and chat shortcut.
     @ViewBuilder func bottomControls() -> some View {
         VStack(spacing: HomeLayout.bottomZonePadding) {
             Group {
@@ -796,8 +813,13 @@ extension Home.RootView {
             .frame(height: HomeLayout.bottomPanelHeight)
             .animation(.easeInOut(duration: 0.2), value: state.bolusProgress != nil)
 
-            multiUsePanel()
-                .frame(height: HomeLayout.statsBannerHeight)
+            HStack(spacing: 0) {
+                multiUsePanel()
+                    .frame(maxWidth: .infinity)
+                aiChatButton
+                    .padding(.trailing, 10)
+            }
+            .frame(height: HomeLayout.statsBannerHeight)
         }
         .padding(.vertical, HomeLayout.bottomZonePadding)
     }

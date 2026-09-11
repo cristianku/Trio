@@ -35,6 +35,7 @@ extension Home {
         @State var showSnoozeSheet: Bool = false
         @State var showManualGlucose: Bool = false
         @State var showReleaseNotes: Bool = false
+        @State var showAIChats = false
         @State var alarmsSnoozeUntil: Date = .distantPast
         @ObservedObject var releaseNotesService = ReleaseNotesService.shared
         // Pull-down-to-force-loop (see HomeRootView+Refresh.swift)
@@ -235,6 +236,17 @@ extension Home {
             }
             .sheet(isPresented: $state.isLegendPresented) {
                 ChartLegendView(state: state)
+            }
+            .sheet(isPresented: $showAIChats) {
+                NavigationStack {
+                    AIAssistant.RootView(resolver: resolver)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Close") { showAIChats = false }
+                            }
+                        }
+                }
+                .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showSnoozeSheet) {
                 SnoozeAlertsSheetView(resolver: resolver, isPresented: $showSnoozeSheet)
