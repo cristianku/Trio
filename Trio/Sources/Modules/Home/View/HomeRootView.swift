@@ -201,6 +201,11 @@ extension Home {
                 }
                 // fixed slot: header state changes never reflow the zones below
                 .frame(height: HomeLayout.headerHeight)
+                .overlay(alignment: .topTrailing) {
+                    trioAIBadge
+                        .padding(.top, 4)
+                        .padding(.trailing, 20)
+                }
 
                 mealPanel().frame(height: HomeLayout.mealSlotHeight)
 
