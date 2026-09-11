@@ -176,7 +176,7 @@ final class BaseOverrideStorage: @preconcurrency OverrideStorage, Injectable {
             }
 
             guard context.hasChanges else { return }
-            try context.save()
+            try context.saveWithSportPrecedence()
         }
     }
 
@@ -212,7 +212,7 @@ final class BaseOverrideStorage: @preconcurrency OverrideStorage, Injectable {
         await viewContext.perform {
             do {
                 guard self.viewContext.hasChanges else { return }
-                try self.viewContext.save()
+                try self.viewContext.saveWithSportPrecedence()
             } catch let error as NSError {
                 debugPrint(
                     "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to copy Override with error: \(error.userInfo)"

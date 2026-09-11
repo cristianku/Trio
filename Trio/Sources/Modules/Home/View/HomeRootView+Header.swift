@@ -69,26 +69,29 @@ extension View {
 
 extension Home.RootView {
     var trioAIBadge: some View {
-        HStack(spacing: 5) {
-            Text(verbatim: "Trio")
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
-            Text(verbatim: "AI")
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(
-                    LinearGradient(colors: [.indigo, .purple], startPoint: .leading, endPoint: .trailing),
-                    in: Capsule()
-                )
+        Button { showAIAbout = true } label: {
+            HStack(spacing: 5) {
+                Text(verbatim: "Trio")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+                Text(verbatim: "AI")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(
+                        LinearGradient(colors: [.indigo, .purple], startPoint: .leading, endPoint: .trailing),
+                        in: Capsule()
+                    )
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .glassMaterialFill(Capsule())
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .glassMaterialFill(Capsule())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: "Trio AI"))
-        .allowsHitTesting(false)
+        .buttonStyle(.plain)
+        .accessibilityLabel("About Trio AI")
     }
 
     var glucoseView: some View {

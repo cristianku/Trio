@@ -28,7 +28,10 @@ final class DiskAIConversationStore: AIConversationStore {
         do {
             try Disk.save(archive, to: directory, as: path, encoder: JSONCoding.encoder)
             let url = try Disk.url(for: path, in: directory)
-            try FileManager.default.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: url.path)
+            try FileManager.default.setAttributes(
+                [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+                ofItemAtPath: url.path
+            )
             var resourceURL = url
             var values = URLResourceValues()
             values.isExcludedFromBackup = true

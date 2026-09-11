@@ -36,7 +36,8 @@ extension Home {
         @State var showManualGlucose: Bool = false
         @State var showReleaseNotes: Bool = false
         @State var showAIChats = false
-        @State var aiInitialQuestion: String?
+        @State var showAIAbout = false
+        @State var aiChartRequest: AIChartRequest?
         @State var alarmsSnoozeUntil: Date = .distantPast
         @ObservedObject var releaseNotesService = ReleaseNotesService.shared
         // Pull-down-to-force-loop (see HomeRootView+Refresh.swift)
@@ -117,8 +118,7 @@ extension Home {
 
         @ViewBuilder private var chartInfoButton: some View {
             Button {
-                aiInitialQuestion = AIChartQuestion.make(interval: state.aiChartVisibleInterval)
-                showAIChats = true
+                aiChartRequest = AIChartRequest(question: AIChartQuestion.make(interval: state.aiChartVisibleInterval))
             } label: {
                 // styled to match the alarm bell pill in the meal row
                 Image(systemName: "info")
@@ -247,14 +247,25 @@ extension Home {
             .sheet(isPresented: $state.isLegendPresented) {
                 ChartLegendView(state: state)
             }
-            .sheet(isPresented: $showAIChats, onDismiss: { aiInitialQuestion = nil }) {
+            .sheet(isPresented: $showAIAbout) {
                 NavigationStack {
-                    AIAssistant.RootView(resolver: resolver, initialQuestion: aiInitialQuestion)
+                    AIAssistant.AboutView(resolver: resolver)
+                }
+            }
+            .sheet(isPresented: $showAIChats) {
+                NavigationStack {
+                    AIAssistant.RootView(resolver: resolver)
                         .toolbar {
                             ToolbarItem(placement: .cancellationAction) {
                                 Button("Close") { showAIChats = false }
                             }
                         }
+                }
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(item: $aiChartRequest) { request in
+                NavigationStack {
+                    AIAssistant.RootView(resolver: resolver, initialQuestion: request.question)
                 }
                 .presentationDragIndicator(.visible)
             }

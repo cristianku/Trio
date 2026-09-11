@@ -4,6 +4,12 @@ import Foundation
 struct AppShortcuts: AppShortcutsProvider {
     @AppShortcutsBuilder static var appShortcuts: [AppShortcut] {
         AppShortcut(
+            intent: StartSportModeIntent(),
+            phrases: ["Start sport in \(.applicationName)"],
+            shortTitle: "Automatic Sport",
+            systemImageName: "figure.run"
+        )
+        AppShortcut(
             intent: BolusIntent(),
             phrases: [
                 "\(.applicationName) bolus",

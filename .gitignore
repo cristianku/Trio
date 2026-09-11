@@ -81,3 +81,6 @@ fastlane/test_output
 fastlane/FastlaneRunner
 
 ConfigOverride.xcconfig
+
+# Local implementation plan (do not publish)
+/docs/superpowers/plans/2026-09-11-automatic-sport-mode.md

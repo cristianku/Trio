@@ -518,7 +518,7 @@ struct EditOverrideForm: View {
                         do {
                             guard let moc = override.managedObjectContext else { return }
                             guard moc.hasChanges else { return }
-                            try moc.save()
+                            try moc.saveWithSportPrecedence()
 
                             try await state.nightscoutManager.uploadProfiles()
 

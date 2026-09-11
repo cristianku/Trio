@@ -4,8 +4,7 @@ import Testing
 @testable import Trio
 
 @Suite("AI message formatting") struct AIMessageFormattingTests {
-    @Test("Assistant emphasis renders without losing paragraphs or glucose units")
-    func emphasis() throws {
+    @Test("Assistant emphasis renders without losing paragraphs or glucose units") func emphasis() throws {
         let message = AIMessage(role: .assistant, content: "Glukoza **92 mg/dl**.\n\n- Trend *płaski*.\n- `IOB` to szacunek.")
         let result = AIMessageFormatting.content(message)
         #expect(String(result.characters) == "Glukoza 92 mg/dl.\n\n- Trend płaski.\n- IOB to szacunek.")
@@ -15,9 +14,11 @@ import Testing
         #expect(result[italic].inlinePresentationIntent?.contains(.emphasized) == true)
     }
 
-    @Test("Generated links and images have no interactive or image attributes")
-    func inertContent() {
-        let message = AIMessage(role: .assistant, content: "[**Settings**](https://example.org) ![image](https://example.org/image.png)")
+    @Test("Generated links and images have no interactive or image attributes") func inertContent() {
+        let message = AIMessage(
+            role: .assistant,
+            content: "[**Settings**](https://example.org) ![image](https://example.org/image.png)"
+        )
         let result = AIMessageFormatting.content(message)
         #expect(!String(result.characters).contains("https://"))
         #expect(String(result.characters).contains("Settings"))
@@ -27,8 +28,7 @@ import Testing
         }
     }
 
-    @Test("User text and unmatched emphasis remain literal")
-    func literalContent() {
+    @Test("User text and unmatched emphasis remain literal") func literalContent() {
         let user = AIMessage(role: .user, content: "**my text**\n2 * 3 < 10")
         #expect(String(AIMessageFormatting.content(user).characters) == user.content)
         #expect(AIMessageFormatting.content(user).runs.allSatisfy { $0.inlinePresentationIntent == nil })
@@ -38,9 +38,37 @@ import Testing
 }
 
 @Suite("AI privacy and persistence", .serialized) struct AIAssistantTests {
-    @Test("Older archives remain readable and manual selection persists")
-    func contextModeMigration() throws {
-        let old = #"{"enabled":true,"consentVersion":1,"model":"gpt-4.1-mini","historyHours":6,"categories":["glucose"],"warningsOnly":true,"remoteContinuity":false}"#
+    @Test("AI localization resources ship with the app", arguments: [
+        "bg", "cs", "da", "de", "es", "fr", "he", "it", "ko", "nb-NO", "nl", "pl",
+        "pt-PT", "ro", "ru", "sv", "tr", "uk", "vi", "zh-Hans", "zh-Hant"
+    ]) func localizationResources(language: String) throws {
+        let path = try #require(Bundle.main.path(forResource: language, ofType: "lproj"))
+        let bundle = try #require(Bundle(path: path))
+        for key in [
+            "About Trio AI",
+            "AI Settings",
+            "Ask about your Trio data",
+            "Your Trio assistant",
+            "Could not reach OpenAI. Check your connection and try again."
+        ] {
+            let translated = bundle.localizedString(forKey: key, value: "MISSING_TRANSLATION", table: nil)
+            #expect(translated != "MISSING_TRANSLATION")
+            #expect(translated != key)
+        }
+    }
+
+    @Test("Default chat titles follow the app language and custom titles stay unchanged") func localizedDefaultTitle() {
+        let conversation = AIConversation(title: "New Conversation")
+        if AIPrompt.appLanguageIdentifier == "it" {
+            #expect(conversation.displayTitle == "Nuova conversazione")
+            #expect(AIError.network.errorDescription == "Impossibile contattare OpenAI. Controlla la connessione e riprova.")
+        }
+        #expect(AIConversation(title: "My own title").displayTitle == "My own title")
+    }
+
+    @Test("Older archives remain readable and manual selection persists") func contextModeMigration() throws {
+        let old =
+            #"{"enabled":true,"consentVersion":1,"model":"gpt-4.1-mini","historyHours":6,"categories":["glucose"],"warningsOnly":true,"remoteContinuity":false}"#
         var config = try JSONDecoder().decode(AIConfiguration.self, from: Data(old.utf8))
         #expect(config.automaticallySelectContext)
         #expect(config.categories == [.glucose])
@@ -51,9 +79,8 @@ import Testing
         #expect(restored.historyHours == .sevenDays)
     }
 
-    @Test("Graph question includes the viewport interval, including the future forecast portion")
-    func graphQuestion() {
-        let interval = DateInterval(start: Date(timeIntervalSince1970: 1800000000), duration: 6 * 3600)
+    @Test("Graph question includes the viewport interval, including the future forecast portion") func graphQuestion() {
+        let interval = DateInterval(start: Date(timeIntervalSince1970: 1_800_000_000), duration: 6 * 3600)
         let formatter = ISO8601DateFormatter()
         formatter.timeZone = .current
         let question = AIChartQuestion.make(interval: interval)
@@ -73,8 +100,15 @@ import Testing
     }
 
     @Test("Secret formats are removed before request serialization") func secrets() throws {
-        let secrets = ["sk-proj-testSecret123456789", "nightscoutSuperSecret", "headerSecret123",
-                       "urlPassword123", "querySecret123", "plainPassword123", "basicSecret123"]
+        let secrets = [
+            "sk-proj-testSecret123456789",
+            "nightscoutSuperSecret",
+            "headerSecret123",
+            "urlPassword123",
+            "querySecret123",
+            "plainPassword123",
+            "basicSecret123"
+        ]
         let text = """
         key sk-proj-testSecret123456789
         api-secret: nightscoutSuperSecret
@@ -107,7 +141,16 @@ import Testing
                 .init(role: "user", content: String(decoding: sanitized, as: UTF8.self))
             ], previousResponseID: nil, store: false)
             let body = String(decoding: try JSONEncoder().encode(request), as: UTF8.self)
-            for secret in ["fixture-one", "fixture-two", "fixture-user", "fixture-nonce", "fixture-response", "fixture-secret", "first", "second"] {
+            for secret in [
+                "fixture-one",
+                "fixture-two",
+                "fixture-user",
+                "fixture-nonce",
+                "fixture-response",
+                "fixture-secret",
+                "first",
+                "second"
+            ] {
                 #expect(!body.contains(secret))
             }
         }
@@ -138,8 +181,10 @@ import Testing
         var restored = try reopened.load()
         #expect(restored.conversations.first?.lastResponseID == "resp_fixture")
         #expect(restored.conversations.first?.messages.first?.content == "Why at 02:00?")
-        #expect(restored.conversations.first?.createdAt.timeIntervalSince1970.rounded() ==
-            conversation.createdAt.timeIntervalSince1970.rounded())
+        #expect(
+            restored.conversations.first?.createdAt.timeIntervalSince1970.rounded() ==
+                conversation.createdAt.timeIntervalSince1970.rounded()
+        )
         restored.conversations[0].title = "Renamed"
         try reopened.save(restored)
         #expect(try store.load().conversations.first?.title == "Renamed")
@@ -152,7 +197,7 @@ import Testing
         let path = "ai-tests/\(UUID().uuidString).json"
         defer { try? Disk.remove(path, from: .temporary) }
         try Disk.save(Data("not JSON".utf8), to: .temporary, as: path)
-        #expect(throws: (any Error).self) {
+        #expect(throws: Error.self) {
             try DiskAIConversationStore(directory: .temporary, path: path).load()
         }
     }

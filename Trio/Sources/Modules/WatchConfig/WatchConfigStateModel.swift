@@ -10,6 +10,38 @@ extension WatchConfig {
         @Published var devices: [IQDevice] = []
         @Published var confirmBolusFaster = false
         @Published var showForecastWatch = false
+        @Published var automaticSportEnabled = false
+        @Published var sportOverrideRules: [SportOverrideRule] = []
+        @Published var sportPresets: [SportPresetChoice] = []
+        @Published var sportError: String?
+
+        @MainActor func loadSportPresets() async {
+            do {
+                guard let coordinator = resolver?.resolve(SportModeCoordinator.self) else { throw SportModeError.storageFailure }
+                sportPresets = try await coordinator.presets()
+                sportError = nil
+            } catch {
+                sportPresets = []
+                sportError = SportModeError.storageFailure.localizedDescription
+            }
+        }
+
+        @MainActor func saveSportLink(id: UUID?, activity: SportActivityKind, presetID: String) -> Bool {
+            do {
+                guard sportPresets.contains(where: { $0.id == presetID }) else { throw SportModeError.invalidPreset }
+                sportOverrideRules = try SportOverrideRule.saving(
+                    id: id,
+                    activity: activity,
+                    presetID: presetID,
+                    in: sportOverrideRules
+                )
+                sportError = nil
+                return true
+            } catch {
+                sportError = error.localizedDescription
+                return false
+            }
+        }
 
         /// Garmin watch settings containing all watch-related configuration
         @Published var garminSettings = GarminWatchSettings()
@@ -24,6 +56,9 @@ extension WatchConfig {
             subscribeSetting(\.garminSettings, on: $garminSettings) { garminSettings = $0 }
             subscribeSetting(\.confirmBolusFaster, on: $confirmBolusFaster) { confirmBolusFaster = $0 }
             subscribeSetting(\.showForecastWatch, on: $showForecastWatch) { showForecastWatch = $0 }
+
+            subscribeSetting(\.automaticSportEnabled, on: $automaticSportEnabled) { automaticSportEnabled = $0 }
+            subscribeSetting(\.sportOverrideRules, on: $sportOverrideRules) { sportOverrideRules = $0 }
 
             devices = garmin.devices
         }

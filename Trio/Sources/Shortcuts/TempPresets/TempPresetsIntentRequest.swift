@@ -143,7 +143,7 @@ final class TempPresetsIntentRequest: BaseIntentsRequest {
 
             if viewContext.hasChanges {
                 debug(.default, "Saving changes...")
-                try viewContext.save()
+                try viewContext.saveWithSportPrecedence()
                 debug(.default, "Waiting for notification...")
                 // Update State variables in TempTargetView
                 Foundation.NotificationCenter.default.post(name: .willUpdateTempTargetConfiguration, object: nil)
@@ -244,7 +244,7 @@ final class TempPresetsIntentRequest: BaseIntentsRequest {
             }
 
             if viewContext.hasChanges {
-                try viewContext.save()
+                try viewContext.saveWithSportPrecedence()
                 debug(.default, "Waiting for notification...")
                 Foundation.NotificationCenter.default.post(name: .willUpdateTempTargetConfiguration, object: nil)
                 await awaitNotification(.didUpdateTempTargetConfiguration)

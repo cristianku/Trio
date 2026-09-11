@@ -1,16 +1,19 @@
 import Foundation
-import Testing
 import Swinject
+import Testing
 
 @testable import Trio
 
 @Suite("AI Keychain credential boundary", .serialized) struct AICredentialTests {
     @Test("Key replacement and deletion use only an isolated Keychain entry") func keychain() throws {
-        let keychain = BaseKeychain(serviceName: "Trio.AI.UnitTests.\(UUID().uuidString)", synchronizable: false,
-                                    accessibilityLevel: .whenUnlockedThisDeviceOnly)
+        let keychain = BaseKeychain(
+            serviceName: "Trio.AI.UnitTests.\(UUID().uuidString)",
+            synchronizable: false,
+            accessibilityLevel: .whenUnlockedThisDeviceOnly
+        )
         defer { keychain.removeObject(forKey: KeychainAICredentialProvider.key) }
         let provider = KeychainAICredentialProvider(keychain: keychain)
-        #expect(throws: (any Error).self) { try provider.apiKey() }
+        #expect(throws: Error.self) { try provider.apiKey() }
         try provider.replaceKey("sk-proj-unitFixture123")
         #expect(try provider.apiKey() == "sk-proj-unitFixture123")
         #expect(try provider.maskedAPIKey() == "sk-proj-un…e123")
@@ -21,12 +24,15 @@ import Swinject
         try provider.replaceKey("sk-proj-replacementFixture456")
         #expect(try provider.apiKey() == "sk-proj-replacementFixture456")
         try provider.deleteKey()
-        #expect(throws: (any Error).self) { try provider.apiKey() }
+        #expect(throws: Error.self) { try provider.apiKey() }
     }
 
     @Test("Short credentials never appear in full in the preview") func shortPreview() throws {
-        let keychain = BaseKeychain(serviceName: "Trio.AI.UnitTests.\(UUID().uuidString)", synchronizable: false,
-                                    accessibilityLevel: .whenUnlockedThisDeviceOnly)
+        let keychain = BaseKeychain(
+            serviceName: "Trio.AI.UnitTests.\(UUID().uuidString)",
+            synchronizable: false,
+            accessibilityLevel: .whenUnlockedThisDeviceOnly
+        )
         defer { keychain.removeObject(forKey: KeychainAICredentialProvider.key) }
         let provider = KeychainAICredentialProvider(keychain: keychain)
         for value in ["x", "sk-short", "123456789012345678"] {
@@ -35,15 +41,21 @@ import Swinject
         }
     }
 
-    @Test("The key preview survives reload and failed replacement preserves the saved key") @MainActor
-    func savedPreview() throws {
-        let keychain = BaseKeychain(serviceName: "Trio.AI.UnitTests.\(UUID().uuidString)", synchronizable: false,
-                                    accessibilityLevel: .whenUnlockedThisDeviceOnly)
+    @Test("The key preview survives reload and failed replacement preserves the saved key") @MainActor func savedPreview() throws {
+        let keychain = BaseKeychain(
+            serviceName: "Trio.AI.UnitTests.\(UUID().uuidString)",
+            synchronizable: false,
+            accessibilityLevel: .whenUnlockedThisDeviceOnly
+        )
         defer { keychain.removeObject(forKey: KeychainAICredentialProvider.key) }
         let credentials = KeychainAICredentialProvider(keychain: keychain)
         let store = MemoryAIStore()
-        let service = DefaultAIService(store: store, builder: AIBuilderFixture(), redactor: DefaultAIContextRedactor(),
-                                       client: AIClientFixture())
+        let service = DefaultAIService(
+            store: store,
+            builder: AIBuilderFixture(),
+            redactor: DefaultAIContextRedactor(),
+            client: AIClientFixture()
+        )
         let container = Container()
         container.register(AIService.self) { _ in service }
         container.register(AICredentialProvider.self) { _ in credentials }

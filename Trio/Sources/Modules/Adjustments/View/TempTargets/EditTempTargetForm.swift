@@ -336,7 +336,7 @@ struct EditTempTargetForm: View {
                 do {
                     guard let moc = tempTarget.managedObjectContext else { return }
                     guard moc.hasChanges else { return }
-                    try moc.save()
+                    try moc.saveWithSportPrecedence()
 
                     if let currentActiveTempTarget = state.currentActiveTempTarget {
                         Task {

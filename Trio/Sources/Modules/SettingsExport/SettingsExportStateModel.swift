@@ -919,13 +919,13 @@ extension SettingsExport {
                 let category = String(localized: "Temp Target Presets")
                 debug(.default, "🔄 EXPORT: Fetching temp target presets...")
 
-                let tempTargetPresetIDs = (try? await tempTargetsStorage.fetchForTempTargetPresets()) ?? []
-                debug(.default, "🔄 EXPORT: Found \(tempTargetPresetIDs.count) temp target preset IDs")
+                let overridePresetIDs = (try? await tempTargetsStorage.fetchForTempTargetPresets()) ?? []
+                debug(.default, "🔄 EXPORT: Found \(overridePresetIDs.count) temp target preset IDs")
 
-                if !tempTargetPresetIDs.isEmpty {
+                if !overridePresetIDs.isEmpty {
                     do {
                         let tempTargetPresets: [ExportSetting] = try await viewContext.perform {
-                            let fetchedTempTargetPresets: [TempTargetStored] = try tempTargetPresetIDs.map {
+                            let fetchedTempTargetPresets: [TempTargetStored] = try overridePresetIDs.map {
                                 guard let obj = try self.viewContext.existingObject(with: $0) as? TempTargetStored else {
                                     throw ExportError.unknown("TempTargetStored type mismatch for objectID \($0)")
                                 }

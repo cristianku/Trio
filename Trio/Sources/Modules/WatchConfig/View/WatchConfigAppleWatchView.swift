@@ -22,6 +22,12 @@ struct WatchConfigAppleWatchView: BaseView {
 
     var body: some View {
         List {
+            Section {
+                NavigationLink(destination: SportOverrideRulesView(state: state)) {
+                    Label("Automatic Sport", systemImage: "figure.run")
+                }
+            }.listRowBackground(Color.chart)
+
             SettingInputSection(
                 decimalValue: $decimalPlaceholder,
                 booleanValue: $state.confirmBolusFaster,

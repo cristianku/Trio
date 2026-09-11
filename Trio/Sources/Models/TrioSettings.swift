@@ -56,6 +56,8 @@ struct TrioSettings: JSON, Equatable, Encodable {
     var maxProtein: Decimal = 250
     var confirmBolusFaster: Bool = false
     var showForecastWatch: Bool = false
+    var automaticSportEnabled: Bool = false
+    var sportOverrideRules: [SportOverrideRule] = []
     var overrideFactor: Decimal = 0.8
     var fattyMeals: Bool = false
     var fattyMealFactor: Decimal = 0.7
@@ -129,6 +131,8 @@ extension TrioSettings: Decodable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         var settings = TrioSettings()
+        settings.automaticSportEnabled = (try? container.decode(Bool.self, forKey: .automaticSportEnabled)) ?? false
+        settings.sportOverrideRules = (try? container.decode([SportOverrideRule].self, forKey: .sportOverrideRules)) ?? []
 
         if let units = try? container.decode(GlucoseUnits.self, forKey: .units) {
             settings.units = units

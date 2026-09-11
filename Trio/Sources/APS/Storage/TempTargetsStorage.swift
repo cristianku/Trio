@@ -168,7 +168,7 @@ final class BaseTempTargetsStorage: TempTargetsStorage, Injectable {
 
             do {
                 guard context.hasChanges else { return }
-                try context.save()
+                try context.saveWithSportPrecedence()
             } catch let error as NSError {
                 debug(.default, "\(DebuggingIdentifiers.failed) Failed to save new temp target with error: \(error.userInfo)")
                 throw error
@@ -233,7 +233,7 @@ final class BaseTempTargetsStorage: TempTargetsStorage, Injectable {
         await viewContext.perform {
             do {
                 guard self.viewContext.hasChanges else { return }
-                try self.viewContext.save()
+                try self.viewContext.saveWithSportPrecedence()
             } catch let error as NSError {
                 debugPrint(
                     "\(DebuggingIdentifiers.failed) \(#file) \(#function) Failed to copy Temp Target with error: \(error.userInfo)"
@@ -259,7 +259,7 @@ final class BaseTempTargetsStorage: TempTargetsStorage, Injectable {
                 context.delete(tempTarget)
 
                 guard context.hasChanges else { return }
-                try context.save()
+                try context.saveWithSportPrecedence()
             } catch {
                 debug(.default, "\(DebuggingIdentifiers.failed) Failed to delete Temp Target: \(error)")
             }

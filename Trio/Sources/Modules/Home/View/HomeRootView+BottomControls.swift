@@ -106,8 +106,13 @@ extension Home.RootView {
 
             } else {
                 /// Do not show the Override anymore
-                Task {
-                    guard let objectID = self.latestOverride.first?.objectID else { return }
+                let objectID = latestOverride.objectID
+                Task { @MainActor in
+                    // The latest row can change before this task runs. Only cancel
+                    // the expired activation that produced this countdown.
+                    guard !latestOverride.isDeleted, latestOverride.enabled,
+                          !latestOverride.indefinite, latestOverride.date == date,
+                          latestOverride.duration == duration else { return }
                     await state.cancelOverride(withID: objectID)
                 }
             }
@@ -785,7 +790,6 @@ extension Home.RootView {
 
     private var aiChatButton: some View {
         Button {
-            aiInitialQuestion = nil
             showAIChats = true
         } label: {
             Image(systemName: "bubble.left.and.bubble.right.fill")

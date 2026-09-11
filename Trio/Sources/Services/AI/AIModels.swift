@@ -1,7 +1,14 @@
 import Foundation
 
 enum AIHistoryWindow: Int, Codable, CaseIterable, Identifiable {
-    case one = 1, three = 3, six = 6, twelve = 12, twentyFour = 24, twoDays = 48, threeDays = 72, sevenDays = 168
+    case one = 1
+    case three = 3
+    case six = 6
+    case twelve = 12
+    case twentyFour = 24
+    case twoDays = 48
+    case threeDays = 72
+    case sevenDays = 168
     var id: Int { rawValue }
     var title: String { rawValue < 48 ? String(localized: "\(rawValue) hours") : String(localized: "\(rawValue / 24) days") }
 }
@@ -9,17 +16,23 @@ enum AIHistoryWindow: Int, Codable, CaseIterable, Identifiable {
 enum AIContextMode: String, Codable { case automatic, manual }
 
 enum AIContextCategory: String, Codable, CaseIterable, Identifiable {
-    case settings, glucose, pumpHistory, carbs, determinations, adjustments, logs
+    case settings
+    case glucose
+    case pumpHistory
+    case carbs
+    case determinations
+    case adjustments
+    case logs
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .settings: return "Settings and Preferences"
-        case .glucose: return "Glucose"
-        case .pumpHistory: return "Insulin / Pump History"
-        case .carbs: return "Carbohydrates"
-        case .determinations: return "Algorithm Determinations (IOB / COB)"
-        case .adjustments: return "Overrides and Temporary Targets"
-        case .logs: return "Application Logs"
+        case .settings: return String(localized: "Settings and Preferences")
+        case .glucose: return String(localized: "Glucose")
+        case .pumpHistory: return String(localized: "Insulin / Pump History")
+        case .carbs: return String(localized: "Carbohydrates")
+        case .determinations: return String(localized: "Algorithm Determinations (IOB / COB)")
+        case .adjustments: return String(localized: "Overrides and Temporary Targets")
+        case .logs: return String(localized: "Application Logs")
         }
     }
 }
@@ -38,6 +51,7 @@ struct AIConfiguration: Codable, Equatable {
         get { contextMode != .manual }
         set { contextMode = newValue ? .automatic : .manual }
     }
+
     mutating func selectTherapyContext() {
         categories.formUnion([.settings, .glucose, .pumpHistory, .carbs, .determinations, .adjustments])
     }
@@ -60,6 +74,10 @@ struct AIConversation: Codable, Identifiable, Equatable {
     var updatedAt = Date()
     var lastResponseID: String?
     var messages: [AIMessage] = []
+
+    var displayTitle: String {
+        messages.isEmpty && title == "New Conversation" ? String(localized: "New Conversation") : title
+    }
 }
 
 struct AIArchive: Codable {
@@ -76,7 +94,7 @@ struct AIContextLimits {
     var determinations = 100
     var adjustments = 50
     var logBytes = 16000
-    static let requestBytes = 240000
+    static let requestBytes = 240_000
     static let messageCharacters = 6000
     static let conversationCharacters = 24000
 }
@@ -215,17 +233,20 @@ struct AIHistorySummary: Codable {
         let maximumMgDL: Int
         let meanMgDL: Double
     }
+
     struct Pump: Codable {
         let eventCounts: [String: Int]
         let recordedPumpBolusUnits: Decimal
         let recordedExternalInsulinUnits: Decimal
         let unclassifiedInsulinUnits: Decimal
     }
+
     struct Carbs: Codable {
         let count: Int
         let recordedMealGrams: Double
         let recordedFPUGrams: Double
     }
+
     struct Determinations: Codable {
         let count: Int
         let enactedCount: Int
@@ -233,26 +254,38 @@ struct AIHistorySummary: Codable {
 }
 
 enum AIError: LocalizedError {
-    case disabled, consentRequired, missingCredential, invalidModel, emptyMessage, busy, missingConversation
-    case persistence, invalidResponse, responseTooLarge, requestTooLarge, network, cancelled, invalidContextPlan
+    case disabled
+    case consentRequired
+    case missingCredential
+    case invalidModel
+    case emptyMessage
+    case busy
+    case missingConversation
+    case persistence
+    case invalidResponse
+    case responseTooLarge
+    case requestTooLarge
+    case network
+    case cancelled
+    case invalidContextPlan
     case api(status: Int, message: String)
 
     var errorDescription: String? {
         switch self {
-        case .disabled: return "Enable AI Assistant in AI Settings before sending."
-        case .consentRequired: return "Review and accept the data sharing information before sending."
-        case .missingCredential: return "Add or replace your OpenAI API key in AI Settings."
-        case .invalidModel: return "Enter a valid OpenAI model ID in AI Settings."
-        case .emptyMessage: return "Enter a question (up to 6,000 characters)."
-        case .busy: return "A request is already running. Cancel it or wait for it to finish."
-        case .missingConversation: return "This conversation is no longer available."
-        case .persistence: return "AI history could not be read or saved. Existing data has not been reset."
-        case .invalidResponse: return "OpenAI returned no complete text response. Try again or check the model."
-        case .responseTooLarge: return "The response exceeded the download limit."
-        case .requestTooLarge: return "The request is too large. Select fewer data categories or a shorter window."
-        case .network: return "Could not reach OpenAI. Check your connection and try again."
-        case .cancelled: return "Request cancelled."
-        case .invalidContextPlan: return "Could not select the requested data within your sharing limits. Rephrase the question or turn off automatic data selection in AI Settings."
+        case .disabled: return String(localized: "Enable AI Assistant in AI Settings before sending.")
+        case .consentRequired: return String(localized: "Review and accept the data sharing information before sending.")
+        case .missingCredential: return String(localized: "Add or replace your OpenAI API key in AI Settings.")
+        case .invalidModel: return String(localized: "Enter a valid OpenAI model ID in AI Settings.")
+        case .emptyMessage: return String(localized: "Enter a question (up to 6,000 characters).")
+        case .busy: return String(localized: "A request is already running. Cancel it or wait for it to finish.")
+        case .missingConversation: return String(localized: "This conversation is no longer available.")
+        case .persistence: return String(localized: "AI history could not be read or saved. Existing data has not been reset.")
+        case .invalidResponse: return String(localized: "OpenAI returned no complete text response. Try again or check the model.")
+        case .responseTooLarge: return String(localized: "The response exceeded the download limit.")
+        case .requestTooLarge: return String(localized: "The request is too large. Try asking about a shorter period.")
+        case .network: return String(localized: "Could not reach OpenAI. Check your connection and try again.")
+        case .cancelled: return String(localized: "Request cancelled.")
+        case .invalidContextPlan: return String(localized: "Could not select the requested time period. Please try asking again.")
         case let .api(status, message): return "OpenAI (\(status)): \(message)"
         }
     }

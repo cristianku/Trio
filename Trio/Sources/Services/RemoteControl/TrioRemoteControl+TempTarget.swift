@@ -62,7 +62,7 @@ extension TrioRemoteControl {
                     canceledTempTarget.isUploadedToNS = false
                 }
                 if self.viewContext.hasChanges {
-                    try self.viewContext.save()
+                    try self.viewContext.saveWithSportPrecedence()
                     Foundation.NotificationCenter.default.post(name: .willUpdateTempTargetConfiguration, object: nil)
                     self.tempTargetsStorage.saveTempTargetsToStorage([TempTarget.cancel(at: Date().addingTimeInterval(-1))])
                     return true

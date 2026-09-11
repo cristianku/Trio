@@ -20,7 +20,7 @@ extension Adjustments.StateModel {
             isOverrideEnabled = true
 
             guard viewContext.hasChanges else { return }
-            try viewContext.save()
+            try viewContext.saveWithSportPrecedence()
 
             updateLatestOverrideConfiguration()
         } catch {
@@ -70,7 +70,7 @@ extension Adjustments.StateModel {
 
                 if self.viewContext.hasChanges {
                     // Save changes and update the View
-                    try self.viewContext.save()
+                    try self.viewContext.saveWithSportPrecedence()
                     self.updateLatestOverrideConfiguration()
                 }
             }
@@ -289,7 +289,7 @@ extension Adjustments.StateModel {
             try await viewContext.perform {
                 overridePresetToDuplicate.enabled = false
                 guard self.viewContext.hasChanges else { return }
-                try self.viewContext.save()
+                try self.viewContext.saveWithSportPrecedence()
             }
 
             if let overrideToEdit = try viewContext.existingObject(with: duplicateId) as? OverrideStored {

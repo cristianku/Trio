@@ -140,7 +140,7 @@ import UIKit
 
             if viewContext.hasChanges {
                 debug(.default, "Saving changes...")
-                try viewContext.save()
+                try viewContext.saveWithSportPrecedence()
                 debug(.default, "Waiting for notification...")
                 Foundation.NotificationCenter.default.post(name: .willUpdateOverrideConfiguration, object: nil)
                 await awaitNotification(.didUpdateOverrideConfiguration)
@@ -227,7 +227,7 @@ import UIKit
             }
 
             if viewContext.hasChanges {
-                try viewContext.save()
+                try viewContext.saveWithSportPrecedence()
                 debug(.default, "Waiting for notification...")
                 Foundation.NotificationCenter.default.post(name: .willUpdateOverrideConfiguration, object: nil)
                 await awaitNotification(.didUpdateOverrideConfiguration)

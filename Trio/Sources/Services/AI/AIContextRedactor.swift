@@ -10,7 +10,8 @@ protocol AIContextRedactor {
 final class DefaultAIContextRedactor: AIContextRedactor {
     private let knownSecrets: () -> [String]
     private let marker = "[REDACTED]"
-    private static let secretName = "(?:authorization|proxy[-_ ]?authorization|api[-_ ]?(?:key|secret)|access[-_ ]?token|refresh[-_ ]?token|id[-_ ]?token|token|secret|password|passwd|credential|client[-_ ]?secret|cookie|set-cookie|x-auth-token)"
+    private static let secretName =
+        "(?:authorization|proxy[-_ ]?authorization|api[-_ ]?(?:key|secret)|access[-_ ]?token|refresh[-_ ]?token|id[-_ ]?token|token|secret|password|passwd|credential|client[-_ ]?secret|cookie|set-cookie|x-auth-token)"
 
     init(knownSecrets: @escaping () -> [String] = { [] }) {
         self.knownSecrets = knownSecrets
@@ -30,12 +31,18 @@ final class DefaultAIContextRedactor: AIContextRedactor {
         result = replacing(#"(?i)\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/%=-]+"#, in: result)
         result = replacing(#"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"#, in: result)
         // Cookie/Digest headers contain multiple semicolon/comma-separated credentials: remove the entire header.
-        result = replacing(#"(?im)(?:^|(?<=\s))["']?(?:authorization|proxy[-_ ]?authorization|cookie|set-cookie)["']?[ \t]*[:=][^\r\n]*"#, in: result)
+        result = replacing(
+            #"(?im)(?:^|(?<=\s))["']?(?:authorization|proxy[-_ ]?authorization|cookie|set-cookie)["']?[ \t]*[:=][^\r\n]*"#,
+            in: result
+        )
         // Escaped JSON field names in log strings: discard the remainder of that credential-bearing line.
         // Parsing arbitrary nested log payloads is unreliable; retaining a secret fragment is worse than omitting a log line.
         result = replacing(#"(?im)\b\#(Self.secretName)(?:\\+["'])[ \t]*[:=][^\r\n]*"#, in: result)
         // Escaped quotes belong to the secret, not to the end delimiter.
-        result = replacing(#"(?im)["']?\#(Self.secretName)["']?\s*[:=]\s*(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\r\n,;&}]+)"#, in: result)
+        result = replacing(
+            #"(?im)["']?\#(Self.secretName)["']?\s*[:=]\s*(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\r\n,;&}]+)"#,
+            in: result
+        )
         return result
     }
 
@@ -44,8 +51,18 @@ final class DefaultAIContextRedactor: AIContextRedactor {
             if let dictionary = value as? [String: Any] {
                 return Dictionary(uniqueKeysWithValues: dictionary.map { key, value in
                     let normalized = key.lowercased().filter { $0.isLetter || $0.isNumber }
-                    let sensitive = ["authorization", "apikey", "apisecret", "token", "secret", "password", "passwd", "credential", "cookie"]
-                        .contains { normalized.contains($0) }
+                    let sensitive = [
+                        "authorization",
+                        "apikey",
+                        "apisecret",
+                        "token",
+                        "secret",
+                        "password",
+                        "passwd",
+                        "credential",
+                        "cookie"
+                    ]
+                    .contains { normalized.contains($0) }
                     return (key, sensitive ? marker : sanitize(value))
                 })
             }

@@ -6,6 +6,7 @@ public extension OverrideStored {
         NSFetchRequest<OverrideStored>(entityName: "OverrideStored")
     }
 
+    @NSManaged var sportRuleID: UUID?
     @NSManaged var advancedSettings: Bool
     @NSManaged var cr: Bool
     @NSManaged var date: Date?

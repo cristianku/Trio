@@ -38,7 +38,7 @@ extension TrioRemoteControl {
         await disableAllActiveOverrides(except: preset.objectID)
         do {
             if viewContext.hasChanges {
-                try viewContext.save()
+                try viewContext.saveWithSportPrecedence()
                 Foundation.NotificationCenter.default.post(name: .willUpdateOverrideConfiguration, object: nil)
                 await awaitNotification(.didUpdateOverrideConfiguration)
                 await logSuccess(
@@ -74,7 +74,7 @@ extension TrioRemoteControl {
                     canceledOverride.isUploadedToNS = false
                 }
                 if self.viewContext.hasChanges {
-                    try self.viewContext.save()
+                    try self.viewContext.saveWithSportPrecedence()
                     Foundation.NotificationCenter.default.post(name: .willUpdateOverrideConfiguration, object: nil)
                     return true
                 } else {

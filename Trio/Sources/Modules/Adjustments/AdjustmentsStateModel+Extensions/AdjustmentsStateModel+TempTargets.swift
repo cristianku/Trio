@@ -183,7 +183,7 @@ extension Adjustments.StateModel {
                 }
 
                 tempTarget.enabled = true
-                try viewContext.save()
+                try viewContext.saveWithSportPrecedence()
                 isTempTargetEnabled = true
             }
 
@@ -270,7 +270,7 @@ extension Adjustments.StateModel {
             tempTargetToEnact.isUploadedToNS = false
             isTempTargetEnabled = true
             if viewContext.hasChanges {
-                try viewContext.save()
+                try viewContext.saveWithSportPrecedence()
             }
 
             updateLatestTempTargetConfiguration()
@@ -335,7 +335,7 @@ extension Adjustments.StateModel {
 
                 // Save the context if there are changes
                 if self.viewContext.hasChanges {
-                    try self.viewContext.save()
+                    try self.viewContext.saveWithSportPrecedence()
 
                     // Update the storage
                     self.tempTargetStorage.saveTempTargetsToStorage([TempTarget.cancel(at: Date().addingTimeInterval(-1))])
@@ -365,7 +365,7 @@ extension Adjustments.StateModel {
                 tempTargetPresetToDuplicate.enabled = false
 
                 guard self.viewContext.hasChanges else { return }
-                try self.viewContext.save()
+                try self.viewContext.saveWithSportPrecedence()
             }
 
             if let tempTargetToEdit = try viewContext.existingObject(with: duplidateId) as? TempTargetStored

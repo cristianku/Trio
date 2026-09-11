@@ -9,7 +9,7 @@ final class FileAILogReader: AILogReader {
     private let paths: [URL]
     private let maxScanBytes: Int
 
-    init(paths: [URL], maxScanBytes: Int = 512000) {
+    init(paths: [URL], maxScanBytes: Int = 512_000) {
         self.paths = paths
         self.maxScanBytes = maxScanBytes
     }
@@ -41,7 +41,7 @@ final class FileAILogReader: AILogReader {
                     guard let space = line.firstIndex(of: " "), let date = formatter.date(from: String(line[..<space])),
                           date >= interval.start, date <= interval.end,
                           let open = line.firstIndex(of: "["), let close = line[open...].firstIndex(of: "]") else { continue }
-                    let category = String(line[line.index(after: open)..<close])
+                    let category = String(line[line.index(after: open) ..< close])
                     guard categories.isEmpty || categories.contains(category) else { continue }
                     guard !warningsOnly || line.contains(" - WARN:") || line.contains(" - ERR:") else { continue }
                     // Keep complete lines; cutting a secret in half would defeat redaction.

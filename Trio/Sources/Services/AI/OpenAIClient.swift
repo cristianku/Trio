@@ -5,6 +5,7 @@ struct OpenAIRequest: Codable {
         let role: String
         let content: String
     }
+
     let model: String
     let instructions: String
     let input: [Input]
@@ -14,7 +15,11 @@ struct OpenAIRequest: Codable {
     var text: AIPlanTextFormat?
 
     enum CodingKeys: String, CodingKey {
-        case model, instructions, input, store, text
+        case model
+        case instructions
+        case input
+        case store
+        case text
         case previousResponseID = "previous_response_id"
         case maxOutputTokens = "max_output_tokens"
     }
@@ -29,30 +34,36 @@ struct AIPlanTextFormat: Codable {
         var strict = true
         var schema = Schema()
     }
+
     struct Schema: Codable {
         var type = "object"
         var additionalProperties = false
         var required = ["startHoursAgo", "endHoursAgo", "categories"]
         var properties = Properties()
     }
+
     struct Properties: Codable {
         var startHoursAgo = Hours()
         var endHoursAgo = Hours()
         var categories = Categories()
     }
+
     struct Hours: Codable {
         var type = "number"
         var minimum = 0
         var maximum = 168
     }
+
     struct Categories: Codable {
         var type = "array"
         var items = Category()
     }
+
     struct Category: Codable {
         var type = "string"
         var values = AIContextCategory.allCases.map(\.rawValue)
-        enum CodingKeys: String, CodingKey { case type; case values = "enum" }
+        enum CodingKeys: String, CodingKey { case type
+            case values = "enum" }
     }
 }
 
@@ -63,9 +74,11 @@ struct OpenAIResponse: Decodable {
             let text: String?
             let refusal: String?
         }
+
         let type: String
         let content: [Content]?
     }
+
     let id: String
     let status: String
     let output: [Output]
@@ -85,15 +98,6 @@ struct OpenAIResponse: Decodable {
     }
 }
 
-struct OpenAIErrorResponse: Decodable {
-    struct Detail: Decodable {
-        let message: String
-        let type: String?
-        let code: String?
-    }
-    let error: Detail
-}
-
 protocol OpenAIClient {
     func respond(to request: OpenAIRequest) async throws -> OpenAIResponse
 }
@@ -103,7 +107,7 @@ final class URLSessionOpenAIClient: NSObject, OpenAIClient, URLSessionTaskDelega
     private let credentials: AICredentialProvider
     private let redactor: AIContextRedactor
     private let configuration: URLSessionConfiguration
-    private let maxResponseBytes = 1000000
+    private let maxResponseBytes = 1_000_000
 
     init(credentials: AICredentialProvider, redactor: AIContextRedactor, configuration: URLSessionConfiguration = .ephemeral) {
         self.credentials = credentials
@@ -116,10 +120,15 @@ final class URLSessionOpenAIClient: NSObject, OpenAIClient, URLSessionTaskDelega
         try Task.checkCancellation()
         let key = try credentials.apiKey()
         // Sanitize every input again at the egress boundary. Keep protocol metadata out of semantic key filtering.
-        let sanitized = OpenAIRequest(model: request.model, instructions: request.instructions,
-                                      input: request.input.map { .init(role: $0.role, content: redactor.redact($0.content)) },
-                                      previousResponseID: request.previousResponseID, store: request.store,
-                                      maxOutputTokens: request.maxOutputTokens, text: request.text)
+        let sanitized = OpenAIRequest(
+            model: request.model,
+            instructions: request.instructions,
+            input: request.input.map { .init(role: $0.role, content: redactor.redact($0.content)) },
+            previousResponseID: request.previousResponseID,
+            store: request.store,
+            maxOutputTokens: request.maxOutputTokens,
+            text: request.text
+        )
         let body = try JSONEncoder().encode(sanitized)
         guard body.count <= AIContextLimits.requestBytes else { throw AIError.requestTooLarge }
         var urlRequest = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
@@ -144,14 +153,13 @@ final class URLSessionOpenAIClient: NSObject, OpenAIClient, URLSessionTaskDelega
                 guard data.count < maxResponseBytes else { throw AIError.responseTooLarge }
                 data.append(byte)
             }
-            guard (200..<300).contains(response.statusCode) else {
-                let detail = try? JSONDecoder().decode(OpenAIErrorResponse.self, from: data)
+            guard (200 ..< 300).contains(response.statusCode) else {
                 let message: String
                 switch response.statusCode {
-                case 401: message = "Authentication failed. Replace the API key in AI Settings."
-                case 429: message = "Rate or quota limit reached. Check API billing and try later."
-                case 500...599: message = "Service temporarily unavailable. Try again later."
-                default: message = detail.map { String(redactor.redact($0.error.message).prefix(300)) } ?? "Request rejected. Check model and configuration."
+                case 401: message = String(localized: "Authentication failed. Replace the API key in AI Settings.")
+                case 429: message = String(localized: "Rate or quota limit reached. Check API billing and try later.")
+                case 500 ... 599: message = String(localized: "Service temporarily unavailable. Try again later.")
+                default: message = String(localized: "Request rejected. Check model and configuration.")
                 }
                 throw AIError.api(status: response.statusCode, message: message)
             }
@@ -171,8 +179,13 @@ final class URLSessionOpenAIClient: NSObject, OpenAIClient, URLSessionTaskDelega
         }
     }
 
-    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
-                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+    func urlSession(
+        _: URLSession,
+        task _: URLSessionTask,
+        willPerformHTTPRedirection _: HTTPURLResponse,
+        newRequest _: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
         completionHandler(nil)
     }
 }

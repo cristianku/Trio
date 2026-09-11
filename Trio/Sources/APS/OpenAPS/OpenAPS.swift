@@ -783,14 +783,57 @@ extension OpenAPS {
     }
 
     func fetchActiveOverrides(on context: NSManagedObjectContext) throws -> [OverrideStored] {
-        try CoreDataStack.shared.fetchEntities(
-            ofType: OverrideStored.self,
-            onContext: context,
-            predicate: NSPredicate.lastActiveOverride,
-            key: "date",
-            ascending: false,
-            fetchLimit: 1
-        ) as? [OverrideStored] ?? []
+        let now = Date()
+        let request = OverrideStored.fetchRequest()
+        request.predicate = NSPredicate(format: "enabled == YES")
+        request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
+        let overrides = try context.fetch(request)
+        // Sport may be started while Home is absent. Enforce its actual end at every
+        // algorithm read instead of relying on Home's countdown to cancel it.
+        let targetRequest = TempTargetStored.fetchRequest()
+        targetRequest.predicate = NSPredicate(format: "enabled == YES")
+        let targets = overrides.contains(where: { $0.sportRuleID != nil }) ? try context.fetch(targetRequest) : []
+        return Self.selectOverrideForAPS(overrides: overrides, tempTargets: targets, now: now).map { [$0] } ?? []
+    }
+
+    static func selectOverrideForAPS(
+        overrides: [OverrideStored],
+        tempTargets: [TempTargetStored],
+        now: Date
+    ) -> OverrideStored? {
+        func isWithinDuration(start: Date?, minutes: NSDecimalNumber?) -> Bool {
+            guard let start = start, let minutes = minutes,
+                  start.timeIntervalSinceReferenceDate.isFinite,
+                  minutes.doubleValue.isFinite, minutes.doubleValue > 0,
+                  (minutes.doubleValue * 60).isFinite
+            else { return false }
+            return start <= now && now < start.addingTimeInterval(minutes.doubleValue * 60)
+        }
+
+        let enabled = overrides.filter(\.enabled)
+            .sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
+        guard enabled.contains(where: { $0.sportRuleID != nil }) else {
+            // Preserve the existing lookback and selection when sport is absent.
+            let previousDay = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now.addingTimeInterval(-86400)
+            return enabled.first { $0.indefinite || ($0.date ?? .distantPast) >= previousDay }
+        }
+
+        // Removing an expired sport candidate must not expose an older expired
+        // manual row that Home has not yet disabled. Also include still-running
+        // manual overrides whose finite duration exceeds the legacy one-day window.
+        let effective = enabled.filter { override in
+            if override.indefinite {
+                return override.sportRuleID == nil && (override.date ?? .distantPast) <= now
+            }
+            return isWithinDuration(start: override.date, minutes: override.duration)
+        }
+        if let manual = effective.first(where: { $0.sportRuleID == nil }) {
+            return manual
+        }
+        guard !tempTargets.contains(where: {
+            $0.enabled && isWithinDuration(start: $0.date, minutes: $0.duration)
+        }) else { return nil }
+        return effective.first
     }
 
     func fetchHistoricalTDDData(from date: Date, on context: NSManagedObjectContext) throws -> [[String: Any]] {

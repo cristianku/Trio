@@ -31,8 +31,14 @@ extension AISettingsSnapshot {
             AISetting(name: "autosensMin", value: String(describing: preferences.autosensMin)),
             AISetting(name: "smbDeliveryRatio", value: String(describing: preferences.smbDeliveryRatio)),
             AISetting(name: "rewindResetsAutosens", value: String(describing: preferences.rewindResetsAutosens)),
-            AISetting(name: "highTemptargetRaisesSensitivity", value: String(describing: preferences.highTemptargetRaisesSensitivity)),
-            AISetting(name: "lowTemptargetLowersSensitivity", value: String(describing: preferences.lowTemptargetLowersSensitivity)),
+            AISetting(
+                name: "highTemptargetRaisesSensitivity",
+                value: String(describing: preferences.highTemptargetRaisesSensitivity)
+            ),
+            AISetting(
+                name: "lowTemptargetLowersSensitivity",
+                value: String(describing: preferences.lowTemptargetLowersSensitivity)
+            ),
             AISetting(name: "sensitivityRaisesTarget", value: String(describing: preferences.sensitivityRaisesTarget)),
             AISetting(name: "resistanceLowersTarget", value: String(describing: preferences.resistanceLowersTarget)),
             AISetting(name: "advTargetAdjustments", value: String(describing: preferences.advTargetAdjustments)),

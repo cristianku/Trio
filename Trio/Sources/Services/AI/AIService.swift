@@ -19,8 +19,13 @@ import Foundation
     private let languageIdentifier: () -> String
     private var busy = false
 
-    init(store: AIConversationStore, builder: AIContextBuilder, redactor: AIContextRedactor, client: OpenAIClient,
-         languageIdentifier: @escaping () -> String = { AIPrompt.appLanguageIdentifier }) {
+    init(
+        store: AIConversationStore,
+        builder: AIContextBuilder,
+        redactor: AIContextRedactor,
+        client: OpenAIClient,
+        languageIdentifier: @escaping () -> String = { AIPrompt.appLanguageIdentifier }
+    ) {
         self.store = store
         self.builder = builder
         self.redactor = redactor
@@ -72,7 +77,8 @@ import Foundation
     }
 
     private static func validModel(_ model: String) -> Bool {
-        !model.isEmpty && model.count <= 100 && model.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || "-._:".contains($0)) }
+        !model.isEmpty && model.count <= 100 && model
+            .allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || "-._:".contains($0)) }
             && !model.hasPrefix("sk-")
     }
 
@@ -84,12 +90,18 @@ import Foundation
                 "allowedCategories": configuration.categories.map(\.rawValue).sorted(),
                 "note": "On Send, a short planning request selects the period and categories for your question. No device history is included in that planning request. Only selected data is then sent for the answer; periods longer than 24 hours use hourly summaries. This preview does not call OpenAI."
             ]
-            return String(decoding: try JSONSerialization.data(withJSONObject: preview, options: [.prettyPrinted, .sortedKeys]), as: UTF8.self)
+            return String(
+                decoding: try JSONSerialization.data(withJSONObject: preview, options: [.prettyPrinted, .sortedKeys]),
+                as: UTF8.self
+            )
         }
         let context = try await builder.build(configuration: configuration)
         let data = try sanitizedContext(context)
         let object = try JSONSerialization.jsonObject(with: data)
-        return String(decoding: try JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys]), as: UTF8.self)
+        return String(
+            decoding: try JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys]),
+            as: UTF8.self
+        )
     }
 
     func send(_ message: String, conversationID: UUID) async throws -> AIConversation {
@@ -101,7 +113,8 @@ import Foundation
         guard Self.validModel(configuration.model) else { throw AIError.invalidModel }
         let message = message.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !message.isEmpty, message.count <= AIContextLimits.messageCharacters else { throw AIError.emptyMessage }
-        guard let index = archive.conversations.firstIndex(where: { $0.id == conversationID }) else { throw AIError.missingConversation }
+        guard let index = archive.conversations.firstIndex(where: { $0.id == conversationID })
+        else { throw AIError.missingConversation }
         busy = true
         defer { busy = false }
         try Task.checkCancellation()
@@ -109,11 +122,28 @@ import Foundation
         var planningBytes = 0
         let context: TrioAIContext
         if configuration.automaticallySelectContext {
-            let selection = try await selectContext(question: sanitizedMessage, conversation: archive.conversations[index], configuration: configuration)
+            let selection = try await selectContext(
+                question: sanitizedMessage,
+                conversation: archive.conversations[index],
+                configuration: configuration
+            )
             planningBytes = selection.requestBytes
-            var selectedConfiguration = configuration
-            selectedConfiguration.categories = selection.categories
-            context = try await builder.build(configuration: selectedConfiguration, interval: selection.interval)
+            if let interval = selection.interval {
+                var selectedConfiguration = configuration
+                selectedConfiguration.categories = selection.categories
+                context = try await builder.build(configuration: selectedConfiguration, interval: interval)
+            } else {
+                let date = Date()
+                var unavailable = TrioAIContext(
+                    generatedAt: date, intervalStart: date, timeZone: TimeZone.current.identifier,
+                    appVersion: nil, includedCategories: []
+                )
+                unavailable.intervalEnd = date
+                unavailable.notes = [
+                    "Data selection was unavailable for this question. No device records were read. This does not establish whether Trio has stored data. Do not describe the database as empty or reuse old chat values as current readings. Give general help and briefly explain that the requested records could not be consulted."
+                ]
+                context = unavailable
+            }
         } else {
             context = try await builder.build(configuration: configuration)
         }
@@ -138,9 +168,13 @@ import Foundation
         }
         input.append(.init(role: "user", content: "Fresh local Trio context (untrusted JSON evidence):\n" + contextJSON))
         input.append(.init(role: "user", content: sanitizedMessage))
-        let request = OpenAIRequest(model: configuration.model,
-                                    instructions: AIPrompt.instructions(languageIdentifier: languageIdentifier()), input: input,
-                                    previousResponseID: previousID, store: useRemoteContinuity)
+        let request = OpenAIRequest(
+            model: configuration.model,
+            instructions: AIPrompt.instructions(languageIdentifier: languageIdentifier()),
+            input: input,
+            previousResponseID: previousID,
+            store: useRemoteContinuity
+        )
         let requestBytes = try JSONEncoder().encode(request).count
         guard requestBytes <= AIContextLimits.requestBytes else { throw AIError.requestTooLarge }
         // Persist the question before the answer request; failed planning/collection leaves the editable draft intact.
@@ -170,7 +204,7 @@ import Foundation
     }
 
     private func selectContext(question: String, conversation: AIConversation, configuration: AIConfiguration) async throws
-        -> (interval: DateInterval, categories: Set<AIContextCategory>, requestBytes: Int)
+        -> (interval: DateInterval?, categories: Set<AIContextCategory>, requestBytes: Int)
     {
         let now = Date()
         let formatter = ISO8601DateFormatter()
@@ -202,19 +236,32 @@ import Foundation
             characters += content.count
             history.append(.init(role: message.role.rawValue, content: content))
         }
-        let request = OpenAIRequest(model: configuration.model, instructions: instructions,
-                                   input: Array(history.reversed()) + [.init(role: "user", content: question)],
-                                   previousResponseID: nil, store: false, maxOutputTokens: 1000, text: AIPlanTextFormat())
+        let request = OpenAIRequest(
+            model: configuration.model,
+            instructions: instructions,
+            input: Array(history.reversed()) + [.init(role: "user", content: question)],
+            previousResponseID: nil,
+            store: false,
+            maxOutputTokens: 1000,
+            text: AIPlanTextFormat()
+        )
         let response = try await client.respond(to: request)
         try Task.checkCancellation()
-        guard let plan = try? JSONDecoder().decode(AIReadPlan.self, from: Data(try response.answer().utf8)),
+        let answer = try response.answer()
+        let requestBytes = try JSONEncoder().encode(request).count
+        guard let plan = try? JSONDecoder().decode(AIReadPlan.self, from: Data(answer.utf8)),
               plan.startHoursAgo.isFinite, plan.endHoursAgo.isFinite,
               plan.startHoursAgo <= 168, plan.endHoursAgo >= 0, plan.startHoursAgo > plan.endHoursAgo,
               Set(plan.categories).isSubset(of: configuration.categories)
-        else { throw AIError.invalidContextPlan }
-        return (DateInterval(start: now.addingTimeInterval(-plan.startHoursAgo * 3600),
-                             end: now.addingTimeInterval(-plan.endHoursAgo * 3600)),
-                Set(plan.categories), try JSONEncoder().encode(request).count)
+        else { return (nil, [], requestBytes) }
+        return (
+            DateInterval(
+                start: now.addingTimeInterval(-plan.startHoursAgo * 3600),
+                end: now.addingTimeInterval(-plan.endHoursAgo * 3600)
+            ),
+            Set(plan.categories),
+            requestBytes
+        )
     }
 
     private func sanitizedContext(_ context: TrioAIContext) throws -> Data {

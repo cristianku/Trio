@@ -8,7 +8,7 @@ import Testing
     @Test("Fetches bounded DTOs without pending writes, preserves SMB and enactment evidence") func snapshots() async throws {
         let stack = try await CoreDataStack.createForTests()
         let context = stack.newTaskContext()
-        let now = Date(timeIntervalSince1970: 1800000000)
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
         try await context.perform {
             for (offset, value) in [(-7200.0, 70), (-60.0, 120), (0.0, 130), (60.0, 200)] {
                 let glucose = GlucoseStored(context: context)
@@ -59,8 +59,12 @@ import Testing
         settings.overrideFactor = 0.65
         settings.fattyMealFactor = 0.75
         settings.sweetMealFactor = 1.15
-        let snapshot = AISettingsSnapshot(settings: settings, preferences: Preferences(),
-                                          pump: PumpSettings(insulinActionCurve: 6, maxBolus: 5, maxBasal: 2), schedules: [])
+        let snapshot = AISettingsSnapshot(
+            settings: settings,
+            preferences: Preferences(),
+            pump: PumpSettings(insulinActionCurve: 6, maxBolus: 5, maxBasal: 2),
+            schedules: []
+        )
         #expect(snapshot.settings.first { $0.name == "overrideFactor" }?.value == "0.65")
         #expect(snapshot.settings.first { $0.name == "fattyMealFactor" }?.value == "0.75")
         #expect(snapshot.settings.first { $0.name == "sweetMealFactor" }?.value == "1.15")
@@ -72,8 +76,12 @@ import Testing
         var preferences = Preferences()
         preferences.enableSMBAlways = true
         preferences.maxIOB = 3
-        let snapshot = AISettingsSnapshot(settings: TrioSettings(), preferences: preferences,
-                                          pump: PumpSettings(insulinActionCurve: 6, maxBolus: 5, maxBasal: 2), schedules: [])
+        let snapshot = AISettingsSnapshot(
+            settings: TrioSettings(),
+            preferences: preferences,
+            pump: PumpSettings(insulinActionCurve: 6, maxBolus: 5, maxBasal: 2),
+            schedules: []
+        )
         #expect(snapshot.preferences.first { $0.name == "enableSMBAlways" }?.value == "true")
         #expect(snapshot.preferences.first { $0.name == "maxIOB" }?.value == "3")
         let json = String(decoding: try JSONEncoder().encode(snapshot), as: UTF8.self)
@@ -83,11 +91,11 @@ import Testing
 }
 
 extension AIDataReaderTests {
-    @Test("Therapy history includes overlapping adjustments, recorded TDD and pump state at window start")
-    func therapyHistory() async throws {
+    @Test("Therapy history includes overlapping adjustments, recorded TDD and pump state at window start") func therapyHistory(
+    ) async throws {
         let stack = try await CoreDataStack.createForTests()
         let context = stack.newTaskContext()
-        let now = Date(timeIntervalSince1970: 1800000000)
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
         let start = now.addingTimeInterval(-3600)
         try await context.perform {
             let adjustment = OverrideStored(context: context)
@@ -131,7 +139,10 @@ extension AIDataReaderTests {
         let interval = DateInterval(start: start, end: now)
         let adjustments = try await reader.adjustments(in: interval, limit: 50)
         #expect(adjustments.count == 2)
-        #expect(adjustments.contains { $0.kind == "override" && $0.parameters.contains { $0.name == "percentage" && $0.value == "120.0" } })
+        #expect(
+            adjustments
+                .contains { $0.kind == "override" && $0.parameters.contains { $0.name == "percentage" && $0.value == "120.0" } }
+        )
         #expect(adjustments.contains { $0.kind == "tempTarget" && $0.targetMgDL == 140 })
         let tdd = try await reader.totalDailyDose(in: interval)
         #expect(tdd?.totalUnits == 42)

@@ -25,7 +25,9 @@ struct AISettingsView: View {
         Binding(get: {
             !showCustomModel && models.contains { $0.id == state.configuration.model } ? state.configuration.model : "custom"
         }, set: { selection in
-            guard selection != "custom" else { model = state.configuration.model; showCustomModel = true; return }
+            guard selection != "custom" else { model = state.configuration.model
+                showCustomModel = true
+                return }
             state.configuration.model = selection
             state.saveConfiguration()
             model = state.configuration.model
@@ -37,50 +39,22 @@ struct AISettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Enable AI Assistant", isOn: setting(\.enabled))
-                Button(state.configuration.hasConsent ? "Review Data Sharing Consent" : "Review and Accept Data Sharing") { showConsent = true }
+                Toggle("Enable AI Assistant", isOn: Binding(get: {
+                    state.configuration.enabled && state.configuration.hasConsent
+                }, set: { enabled in
+                    if enabled {
+                        if state.configuration.hasConsent { state.acceptConsent() }
+                        else { showConsent = true }
+                    } else {
+                        state.configuration.enabled = false
+                        state.saveConfiguration()
+                    }
+                }))
             } footer: {
-                Text("Read-only and experimental. Selected medical data and conversation messages are sent to OpenAI only when you press Send.")
+                Text("When you ask a question, AI uses only the Trio data it needs, from the last 7 days.")
             }.listRowBackground(Color.chart)
             keySection
             modelSection
-            Section("Context for Each Message") {
-                Toggle("Choose Data Automatically", isOn: setting(\.automaticallySelectContext))
-                if state.configuration.automaticallySelectContext {
-                    Text("AI selects the period and enabled categories needed for your question, up to 7 days. Longer periods use summaries. A short planning request is made before the answer.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Button("Select Therapy Context") {
-                    state.configuration.selectTherapyContext()
-                    state.saveConfiguration()
-                }
-                Text("Selects therapy settings, glucose, recorded insulin, carbs, determinations, overrides and temporary targets. Logs remain optional.")
-                    .font(.caption).foregroundStyle(.secondary)
-                if !state.configuration.automaticallySelectContext {
-                    Picker("History Window", selection: setting(\.historyHours)) {
-                        ForEach(AIHistoryWindow.allCases) { window in Text(window.title).tag(window) }
-                    }
-                }
-                ForEach(AIContextCategory.allCases) { category in
-                    Toggle("Include \(category.title)", isOn: Binding(get: {
-                        state.configuration.categories.contains(category)
-                    }, set: { included in
-                        if included { state.configuration.categories.insert(category) } else { state.configuration.categories.remove(category) }
-                        state.saveConfiguration()
-                    }))
-                }
-                if state.configuration.categories.contains(.logs) { Toggle("Only WARN / ERR Logs", isOn: setting(\.warningsOnly)) }
-                NavigationLink("Preview AI Context") { AIContextPreviewView(state: state) }
-            }.listRowBackground(Color.chart)
-            Section {
-                Toggle("Remote Conversation Continuity", isOn: setting(\.remoteContinuity))
-                    .disabled(state.configuration.automaticallySelectContext)
-            } header: { Text("Optional OpenAI Storage") } footer: {
-                Text("Available in manual mode. Automatic selection uses a short local conversation history so earlier data snapshots do not accumulate. Enabling remote continuity requests storage with OpenAI; local deletion does not delete remote data.")
-            }.listRowBackground(Color.chart)
-            if let size = state.lastRequestBytes {
-                Section { Text("Last request: approximately \(size) bytes").font(.caption) }.listRowBackground(Color.chart)
-            }
             if let error = state.errorMessage { Section { Text(error).foregroundStyle(.red) }.listRowBackground(Color.chart) }
         }
         .disabled(state.isLoading || !state.isReady)
@@ -103,7 +77,8 @@ struct AISettingsView: View {
                     .navigationTitle("Data Sharing")
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) { Button("Close") { showConsent = false } }
-                        ToolbarItem(placement: .confirmationAction) { Button("I Agree") { state.acceptConsent(); showConsent = false } }
+                        ToolbarItem(placement: .confirmationAction) { Button("Enable AI Assistant") { state.acceptConsent()
+                            showConsent = false } }
                     }
             }
         }
@@ -143,7 +118,7 @@ struct AISettingsView: View {
 
     private var modelSection: some View {
         Section {
-            Picker("Model", selection: modelSelection) {
+            Picker("AI Model", selection: modelSelection) {
                 ForEach(models, id: \.id) { option in Text(option.name).tag(option.id) }
                 Text("Custom Model").tag("custom")
             }
@@ -158,7 +133,7 @@ struct AISettingsView: View {
                     }
             }
         } header: {
-            Text("Model")
+            Text("AI Model")
         } footer: {
             Text("Model availability depends on your OpenAI project. Pricing varies by model.")
         }.listRowBackground(Color.chart)
@@ -183,32 +158,5 @@ struct AISettingsView: View {
             state.saveConfiguration()
         }
         model = state.configuration.model
-    }
-
-    private func setting<Value>(_ keyPath: WritableKeyPath<AIConfiguration, Value>) -> Binding<Value> {
-        Binding(get: { state.configuration[keyPath: keyPath] }, set: {
-            state.configuration[keyPath: keyPath] = $0
-            state.saveConfiguration()
-        })
-    }
-}
-
-struct AIContextPreviewView: View {
-    @Bindable var state: AIAssistant.StateModel
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Sanitized local snapshot. No request is sent by this preview. Your question and recent conversation messages will also be sent when you press Send.")
-                    .font(.callout).foregroundStyle(.secondary)
-                if state.isPreviewing { ProgressView("Reading context…") }
-                Text(verbatim: state.preview).font(.system(.caption, design: .monospaced)).textSelection(.enabled)
-                if let error = state.errorMessage { Text(error).foregroundStyle(.red) }
-            }.padding()
-        }
-        .navigationTitle("Preview AI Context")
-        .onAppear { state.previewContext() }
-        .onDisappear { state.cancelPreview(); state.preview = "" }
-        .toolbar { Button("Refresh") { state.previewContext() }.disabled(state.isPreviewing) }
     }
 }

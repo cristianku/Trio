@@ -20,7 +20,13 @@ final class TrioAIDataReader: AITrioDataReading {
         let context = makeContext()
         return try await context.perform {
             let request = NSFetchRequest<T>(entityName: String(describing: type))
-            request.predicate = predicate ?? NSPredicate(format: "%K >= %@ AND %K <= %@", key, interval.start as NSDate, key, interval.end as NSDate)
+            request.predicate = predicate ?? NSPredicate(
+                format: "%K >= %@ AND %K <= %@",
+                key,
+                interval.start as NSDate,
+                key,
+                interval.end as NSDate
+            )
             request.sortDescriptors = [NSSortDescriptor(key: key, ascending: false)]
             request.fetchLimit = max(1, limit)
             request.fetchBatchSize = min(50, max(1, limit))
@@ -33,13 +39,24 @@ final class TrioAIDataReader: AITrioDataReading {
     func glucose(in interval: DateInterval, limit: Int) async throws -> [AIGlucose] {
         try await read(GlucoseStored.self, interval: interval, key: "date", limit: limit) {
             guard let date = $0.date else { return nil }
-            return AIGlucose(date: date, glucoseMgDL: Int($0.glucose), smoothedGlucoseMgDL: $0.smoothedGlucose?.decimalValue,
-                             direction: $0.direction, isManual: $0.isManual)
+            return AIGlucose(
+                date: date,
+                glucoseMgDL: Int($0.glucose),
+                smoothedGlucoseMgDL: $0.smoothedGlucose?.decimalValue,
+                direction: $0.direction,
+                isManual: $0.isManual
+            )
         }
     }
 
     func pumpHistory(in interval: DateInterval, limit: Int) async throws -> [AIPumpEvent] {
-        try await read(PumpEventStored.self, interval: interval, key: "timestamp", limit: limit, relationships: ["bolus", "tempBasal"]) {
+        try await read(
+            PumpEventStored.self,
+            interval: interval,
+            key: "timestamp",
+            limit: limit,
+            relationships: ["bolus", "tempBasal"]
+        ) {
             Self.pumpEvent($0)
         }
     }
@@ -54,13 +71,25 @@ final class TrioAIDataReader: AITrioDataReading {
     func determinations(in interval: DateInterval, limit: Int) async throws -> [AIDetermination] {
         try await read(OrefDetermination.self, interval: interval, key: "deliverAt", limit: limit) {
             guard let date = $0.deliverAt else { return nil }
-            return AIDetermination(date: date, enactedAt: $0.timestampEnacted, enacted: $0.enacted, reason: $0.reason,
-                                   glucoseMgDL: $0.glucose?.decimalValue, eventualGlucoseMgDL: $0.eventualBG?.decimalValue,
-                                   targetMgDL: $0.currentTarget?.decimalValue, iobUnits: $0.iob?.decimalValue, cobGrams: Int($0.cob),
-                                   smbUnits: $0.smbToDeliver?.decimalValue, basalRateUnitsPerHour: $0.rate?.decimalValue,
-                                   durationMinutes: $0.duration?.decimalValue, insulinRequirementUnits: $0.insulinReq?.decimalValue,
-                                   sensitivityMgDLPerUnit: $0.insulinSensitivity?.decimalValue, sensitivityRatio: $0.sensitivityRatio?.decimalValue,
-                                   carbRatioGramsPerUnit: $0.carbRatio?.decimalValue, scheduledBasalUnitsPerHour: $0.scheduledBasal?.decimalValue)
+            return AIDetermination(
+                date: date,
+                enactedAt: $0.timestampEnacted,
+                enacted: $0.enacted,
+                reason: $0.reason,
+                glucoseMgDL: $0.glucose?.decimalValue,
+                eventualGlucoseMgDL: $0.eventualBG?.decimalValue,
+                targetMgDL: $0.currentTarget?.decimalValue,
+                iobUnits: $0.iob?.decimalValue,
+                cobGrams: Int($0.cob),
+                smbUnits: $0.smbToDeliver?.decimalValue,
+                basalRateUnitsPerHour: $0.rate?.decimalValue,
+                durationMinutes: $0.duration?.decimalValue,
+                insulinRequirementUnits: $0.insulinReq?.decimalValue,
+                sensitivityMgDLPerUnit: $0.insulinSensitivity?.decimalValue,
+                sensitivityRatio: $0.sensitivityRatio?.decimalValue,
+                carbRatioGramsPerUnit: $0.carbRatio?.decimalValue,
+                scheduledBasalUnitsPerHour: $0.scheduledBasal?.decimalValue
+            )
         }
     }
 }
@@ -137,18 +166,33 @@ extension TrioAIDataReader {
             relationships: ["override"], predicate: overlap
         ) {
             guard let start = $0.startDate else { return nil }
-            return AIAdjustment(kind: "override", source: "recordedRun", startDate: start, endDate: $0.endDate,
-                                plannedEndDate: nil, targetMgDL: $0.target?.decimalValue,
-                                parameters: Self.overrideParameters($0.override))
+            return AIAdjustment(
+                kind: "override",
+                source: "recordedRun",
+                startDate: start,
+                endDate: $0.endDate,
+                plannedEndDate: nil,
+                targetMgDL: $0.target?.decimalValue,
+                parameters: Self.overrideParameters($0.override)
+            )
         }
         let targetRuns: [AIAdjustment] = try await read(
             TempTargetRunStored.self, interval: interval, key: "startDate", limit: limit,
             relationships: ["tempTarget"], predicate: overlap
         ) {
             guard let start = $0.startDate else { return nil }
-            return AIAdjustment(kind: "tempTarget", source: "recordedRun", startDate: start, endDate: $0.endDate,
-                                plannedEndDate: nil, targetMgDL: $0.target?.decimalValue,
-                                parameters: [.init(name: "halfBasalTargetMgDL", value: $0.tempTarget?.halfBasalTarget?.stringValue ?? "uses preference")])
+            return AIAdjustment(
+                kind: "tempTarget",
+                source: "recordedRun",
+                startDate: start,
+                endDate: $0.endDate,
+                plannedEndDate: nil,
+                targetMgDL: $0.target?.decimalValue,
+                parameters: [.init(
+                    name: "halfBasalTargetMgDL",
+                    value: $0.tempTarget?.halfBasalTarget?.stringValue ?? "uses preference"
+                )]
+            )
         }
         let enabled = NSPredicate(format: "enabled == YES AND date <= %@", interval.end as NSDate)
         let overrides: [AIAdjustment] = try await read(
@@ -156,20 +200,36 @@ extension TrioAIDataReader {
         ) {
             guard let start = $0.date else { return nil }
             let plannedEnd = $0.indefinite ? nil : $0.duration.map { start.addingTimeInterval($0.doubleValue * 60) }
-            return AIAdjustment(kind: "override", source: "currentlyEnabledConfiguration", startDate: start, endDate: nil,
-                                plannedEndDate: plannedEnd, targetMgDL: $0.target?.decimalValue,
-                                parameters: Self.overrideParameters($0))
+            return AIAdjustment(
+                kind: "override",
+                source: "currentlyEnabledConfiguration",
+                startDate: start,
+                endDate: nil,
+                plannedEndDate: plannedEnd,
+                targetMgDL: $0.target?.decimalValue,
+                parameters: Self.overrideParameters($0)
+            )
         }
         let targets: [AIAdjustment] = try await read(
             TempTargetStored.self, interval: interval, key: "date", limit: limit, predicate: enabled
         ) {
             guard let start = $0.date else { return nil }
-            return AIAdjustment(kind: "tempTarget", source: "currentlyEnabledConfiguration", startDate: start, endDate: nil,
-                                plannedEndDate: $0.duration.map { start.addingTimeInterval($0.doubleValue * 60) },
-                                targetMgDL: $0.target?.decimalValue,
-                                parameters: [.init(name: "halfBasalTargetMgDL", value: $0.halfBasalTarget?.stringValue ?? "uses preference")])
+            return AIAdjustment(
+                kind: "tempTarget",
+                source: "currentlyEnabledConfiguration",
+                startDate: start,
+                endDate: nil,
+                plannedEndDate: $0.duration.map { start.addingTimeInterval($0.doubleValue * 60) },
+                targetMgDL: $0.target?.decimalValue,
+                parameters: [.init(
+                    name: "halfBasalTargetMgDL",
+                    value: $0.halfBasalTarget?.stringValue ?? "uses preference"
+                )]
+            )
         }
-        return Array((overrideRuns + targetRuns + overrides + targets)
-            .filter { $0.overlaps(interval) }.sorted { $0.startDate > $1.startDate }.prefix(max(0, limit)))
+        return Array(
+            (overrideRuns + targetRuns + overrides + targets)
+                .filter { $0.overlaps(interval) }.sorted { $0.startDate > $1.startDate }.prefix(max(0, limit))
+        )
     }
 }

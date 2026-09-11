@@ -988,7 +988,7 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
                                 )
                                 return
                             }
-                            try context.save()
+                            try context.saveWithSportPrecedence()
                             debug(.watchManager, "📱 Successfully stopped override")
 
                             // Send notification to update Adjustments UI
@@ -1097,7 +1097,7 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
                         )
                         return
                     }
-                    try context.save()
+                    try context.saveWithSportPrecedence()
                     debug(.watchManager, "📱 Successfully activated override: \(presetName)")
 
                     // Send notification to update Adjustments UI
@@ -1167,7 +1167,7 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
                             )
                             return
                         }
-                        try context.save()
+                        try context.saveWithSportPrecedence()
                         debug(.watchManager, "📱 Successfully activated temp target: \(presetName)")
 
                         let settingsHalfBasalTarget = self.settingsManager.preferences
@@ -1243,7 +1243,7 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
                                 )
                                 return
                             }
-                            try context.save()
+                            try context.saveWithSportPrecedence()
                             debug(.watchManager, "📱 Successfully cancelled temp target")
 
                             // To cancel the temp target also for oref

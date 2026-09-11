@@ -205,7 +205,12 @@ enum SettingItems {
     ]
 
     static let trioFeaturesItems = [
-        SettingItem(title: "AI Assistant", view: .aiAssistant, searchContents: ["OpenAI", "AI Settings", "AI Conversations"], path: ["Features"]),
+        SettingItem(
+            title: "AI Assistant",
+            view: .aiAssistant,
+            searchContents: ["OpenAI", "AI Settings", "AI Conversations"],
+            path: ["Features"]
+        ),
         SettingItem(
             title: "Bolus Calculator",
             view: .bolusCalculatorConfig,

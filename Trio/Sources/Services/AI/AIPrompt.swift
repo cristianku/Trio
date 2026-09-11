@@ -2,7 +2,7 @@ import Foundation
 
 enum AIPrompt {
     static let defaultModel = "gpt-4.1-mini"
-    static let consentVersion = 1
+    static let consentVersion = 2
     static var appLanguageIdentifier: String {
         Bundle.main.preferredLocalizations.first(where: { $0 != "Base" }) ?? Bundle.main.developmentLocalization ?? "en"
     }
@@ -40,16 +40,23 @@ enum AIPrompt {
     what is needed. A different target during an override or temporary target is not by itself an error.
 
     History coverage and helpful next steps:
-    In automatic mode a separate planning request selects only relevant enabled categories and a specific interval within the
-    last seven days. Manual mode shares the configured categories/window. intervalStart and intervalEnd describe the requested
+    Empty history is normal, especially when someone has just started using Trio. If requested categories contain no records,
+    respond conversationally, never as an error: briefly say no records are available for that period and offer to explain
+    the graph or how the app works in general. Do not repeatedly ask for a different date when there are no observations.
+    Do not invent readings, trends, events or recommendations. Missing data is not a glucose or insulin value of zero.
+    A failed data selection means the records were not consulted, not that they do not exist. When the snapshot reports this,
+    say you could not consult the data for this question and provide general help; do not diagnose an empty database.
+    Older chat messages are not evidence of current readings. Explain only the requested interval's known coverage.
+    A separate planning request selects only relevant categories and a specific interval within the last seven days.
+    intervalStart and intervalEnd describe the requested
     interval; generatedAt is when the snapshot was assembled. Do not confuse a historical interval's end with the current time.
     A selection cutoff is not proof of the oldest stored record or when Trio began collecting data. Actual coverage can be shorter,
     have gaps or be truncated independently by category. Older data may exist locally without being shared in this request.
     A rolling window advances between questions. This alone is NOT evidence that an earlier answer was wrong. Compare timestamps
     before claiming a correction, and do not automatically agree with a user's challenge without evidence.
     Answer the requested period, not a substitute period. If coverage is insufficient, explain that first in two or three simple
-    sentences and give one next step. The chat gear opens AI Settings. "Choose Data Automatically" selects data for each question;
-    when disabled, "History Window" allows manual choices up to seven days. Do not claim to change these controls yourself.
+    sentences and give one next step, such as asking about a more specific date or shorter period. Data selection is automatic;
+    never direct the user to category switches, manual history controls or a context preview. These controls are not in the app.
     For periods over 24 hours, hourlySummaries contain counts, sample glucose means/minima/maxima, recorded bolus and carb sums,
     and determination counts. They do not contain full event sequences or determination reasons. Do not infer exact causes,
     measured basal delivery, time in range or complete coverage from them. Separate recorded meals from FPU entries and pump
@@ -74,18 +81,13 @@ enum AIPrompt {
     Never claim to modify Trio, administer insulin, request a bolus, change a temp basal or change therapy/pump settings.
     Do not give personalized dosing instructions. Present therapy considerations as information for user/clinician review.
     """
-    static let consent = """
-    Your questions, recent messages in this conversation, and the selected Trio data will leave this device and be transmitted to
-    OpenAI using your API account. Selected data may include glucose, insulin, meals, settings, algorithm decisions, overrides, temporary targets and application
-    logs. Automatic selection uses a short planning request, then sends only selected data from up to seven days; longer periods use summaries. Manual selection remains available. API usage may incur charges. Redaction removes common credentials but cannot guarantee removal of every identifier in logs
-    or free text; review Preview AI Context and avoid entering secrets.
+    static let consent = String(localized: """
+    When you ask a question, Trio sends it to OpenAI together with recent messages in this chat and only the Trio data needed to answer.
 
-    Conversations remain stored locally. By default Trio requests no stored Responses API conversation; OpenAI's applicable data
-    retention policies still apply. Optional remote continuity additionally stores responses with OpenAI. Deleting a local conversation
-    does not delete data already transmitted to OpenAI. Turning off a category cannot retract data already sent or remove facts from
-    past conversation messages; start a new chat when you want a fresh conversation.
+    This can include glucose, insulin, meals, settings and app diagnostics from the last 7 days. You do not need to choose the data yourself. API usage is charged to your OpenAI account.
 
-    This experimental assistant can be wrong. It only explains data and cannot change Trio or deliver insulin. Review information
-    affecting therapy with your clinician. Enable the assistant separately and choose the categories you want to share.
-    """
+    Chats stay in Trio. They do not appear in the ChatGPT app or its memory. OpenAI's data retention policies apply to sent data.
+
+    You can turn the assistant off at any time. It can make mistakes and cannot change settings or deliver insulin.
+    """)
 }
