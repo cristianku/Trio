@@ -19,9 +19,9 @@ Graph: Screen → AIAssistant views/state → AIService → AIContextBuilder →
 
 ## Privacy and continuity
 
-AI and all context categories default off, history defaults to six hours. Explicit enablement and consent are required before each request can pass the service gate. Context is rebuilt and sanitized on every send. Context preview is local and sanitized.
+AI and all context categories default off. Automatic data selection is the default; manual mode keeps the saved history choice (six hours initially). Explicit enablement and consent gate both planning and answering. Automatic selection cannot exceed seven days or the enabled categories. Context is sanitized before transmission. Preview stays local: automatic mode shows the selection policy and allowed categories, while manual mode previews its actual configured snapshot.
 
-Local conversations are authoritative. Default requests use `store: false` and bounded local message history. Optional remote continuity uses `store: true` / `previous_response_id`; changing privacy selections or model invalidates the remote chain. Remote storage is separate from local deletion. Requests never expose tools, and model output is displayed as text only.
+Local conversations are authoritative. Default requests use `store: false` and bounded local message history. In manual mode, optional remote continuity uses `store: true` / `previous_response_id`; changing privacy selections or model invalidates the remote chain. Automatic mode always uses `store: false` with at most six prior messages / 6,000 characters, so old raw snapshots do not accumulate in a remote chain. Remote storage is separate from local deletion. Requests never expose tools, and model output is displayed as text only.
 
 API schema references: https://developers.openai.com/api/docs/guides/conversation-state and https://developers.openai.com/api/reference/resources/responses/methods/create . Instructions are sent on every turn, including chained turns.
 
@@ -34,6 +34,18 @@ fallback) and adds its language name and identifier to the instructions on every
 iOS per-app language selection, rather than guessing from the question, region, logs or earlier replies. No separate AI language
 setting is stored. Brevity and response language are model instructions, not post-processing or a guarantee of generated wording.
 
+Automatic selection first sends the question and a bounded recent conversation (no device snapshot) to the same configured
+model using a strict Structured Outputs schema. The result chooses a relative start/end within the last 168 hours and a subset
+of enabled categories. Local validation rejects invalid intervals, malformed plans and unauthorized categories before any data
+fetch or answer request; there is no fallback that silently sends all data. The second request contains only the selected context.
+The planning request adds latency and some tokens; the saving comes from omitting irrelevant records, not from a claim of zero
+context cost. The displayed byte count totals planning and answer requests. Reference:
+[OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
+
+Snapshots distinguish `generatedAt` from `intervalStart` / `intervalEnd`; a past interval does not end at the current time. A rolling
+cutoff advancing between questions is not evidence of an earlier mistake. For inadequate coverage, the prompt asks for a brief
+explanation and a useful next step. A seven-day limit does not imply seven days of records actually remain on the device.
+
 Disk is the throwing persistence primitive already used by FileStorage. AI uses it directly so failed or corrupt conversation writes cannot be silently treated as success; no new database is introduced. Credentials are excluded from all Codable configuration and archive types.
 
 ## Using the assistant
@@ -41,11 +53,15 @@ Disk is the throwing persistence primitive already used by FileStorage. AI uses 
 The Home screen also has a speech-bubble shortcut at the lower right, beside the information/statistics panel and above the tab bar.
 It opens the existing conversations screen in a sheet with its own navigation and a Close button. The shortcut has a dedicated
 52-point touch target, keeps the dashboard's existing vertical layout, and is available before setup so users can reach AI Settings.
-Opening it does not send a request or enable AI. The original Settings → Features → AI Assistant entry remains available.
+Opening the speech-bubble shortcut does not send a request or enable AI. The original Settings → Features → AI Assistant entry remains available.
+The graph's info button opens a new chat and asks for an explanation of its visible interval (tracked after pan/zoom without
+invalidating the Home layout). It sends immediately only if AI is already enabled, consented and configured; otherwise the draft
+remains with the configuration link. The original chart legend is available from the info button's context menu. The model receives
+selected stored data, not an image of the chart; future chart portions are forecasts, not observations.
 
 Open **Settings → Features → AI Assistant → AI Settings** (also searchable as “AI Assistant” or “OpenAI”). Enter the key in the secure **OpenAI API Key** field; finishing editing or leaving the screen saves it automatically. A saved key replaces the input with a masked preview showing only its first ten and last four characters (short values are fully masked). Tap the preview to enter a replacement; an empty replacement keeps the current key, and a failed write leaves the saved key and preview intact. The full saved value is never placed in a text field or archive. There are no Save, Replace, or Delete buttons. The default model is `gpt-4.1-mini`, defined in `AIPrompt`. The **Model** picker offers GPT-4.1 Mini, GPT-5.6 Luna, GPT-5.6 Terra, GPT-5.6 Sol, and GPT-6 Astra; choosing a preset saves it immediately. Choose **Custom Model** to enter another Responses-compatible model ID, which saves when editing ends or the screen closes. Existing custom IDs remain editable. This is a built-in list, not a live query of account permissions; model availability depends on the API project. Reference: https://developers.openai.com/api/docs/models .
 
-Review **Data Sharing**, tap **I Agree**, enable the assistant and choose the data categories. All categories initially remain off; the window defaults to 6 hours, with 1/3/6/12/24 hours available. Preview AI Context does not send a request and can be used before enabling the feature. New Chat creates a local conversation. Reopen it from Conversations; use its context menu to rename/delete, or swipe to delete locally. The composer supports multiple lines, cancellation and per-conversation in-memory drafts. **Select Therapy Context** selects settings, glucose, recorded insulin, carbs, determinations, overrides and temporary targets in one action; it does not enable the assistant or accept consent. Logs remain optional.
+Review **Data Sharing**, tap **I Agree**, enable the assistant and choose the data categories under **Context for Each Message**. **Choose Data Automatically** selects only what the question needs within seven days. Turn it off to use **History Window** manually: 1/3/6/12/24 hours or 2/3/7 days. All categories initially remain off. Preview AI Context does not send a request and can be used before enabling the feature. New Chat creates a local conversation. Reopen it from Conversations; use its context menu to rename/delete, or swipe to delete locally. The composer supports multiple lines, cancellation and per-conversation in-memory drafts. **Select Therapy Context** selects settings, glucose, recorded insulin, carbs, determinations, overrides and temporary targets in one action; it does not enable the assistant or accept consent. Logs remain optional.
 
 The API credential provider uses Trio's `Keychain` protocol and `BaseKeychain`, with synchronization disabled and `whenUnlockedThisDeviceOnly` accessibility. The key lives only in the Keychain entry `AIAssistant.OpenAI.apiKey`; AI settings and archives have no credential field. Existing Nightscout credentials and their SHA-1 representation are used only for exact-value redaction, never as context fields.
 
@@ -57,7 +73,15 @@ The read-only adapter fetches committed records from private CoreDataStack conte
 
 IOB/COB are included with the timestamp of their determination when that category is selected. Suggested SMBs remain distinct from actual pump events and enacted flags. Raw and stored smoothed glucose are identified separately. Current settings cannot establish which configuration existed at a historical timestamp.
 
-Limits per fresh snapshot:
+For intervals over 24 hours, glucose, pump, carbohydrate and determination records are summarized into UTC-hour buckets covering
+the entire requested interval (at most 169 partial/full buckets over seven days). Local fetches are bounded per 24-hour chunk:
+2,000 glucose rows, 4,000 pump events, 500 carb entries and 2,000 determinations, with explicit truncation notes. The glucose fields
+are sample count, first/last timestamps, min/max and sample mean; they are not time-weighted TIR. Pump summaries keep recorded
+pump boluses, external insulin and unclassified amounts separate and never calculate basal delivery. Meal and FPU carbs stay
+separate. Determination summaries retain counts, not full reasons. Detailed questions should select a shorter interval. Settings,
+adjustments, stored TDD/boundary references and optional logs retain their existing bounds.
+
+Limits for detailed snapshots (up to 24 hours):
 
 | Data | Maximum |
 |---|---:|
@@ -71,17 +95,17 @@ Limits per fresh snapshot:
 | Each settings schedule | 96 |
 | Selected log message bytes | 16,000 |
 | Scanned tail per log file | 512,000 bytes |
-| Recent local conversation | 20 messages / 24,000 characters |
+| Recent local conversation | Automatic: 6 messages / 6,000 characters; manual: 20 / 24,000 |
 | User question | 6,000 characters |
 | Encoded request | 240,000 bytes |
 | Response download | 1,000,000 bytes |
-| Response output budget | 2,000 tokens |
+| Response output budget | Answer: 2,000 tokens; planning: 1,000 |
 
 `FileAILogReader` opens SimpleLogReporter's `logs/log.txt` and `logs/log_prev.txt` read-only, scans bounded tails on a utility task, and parses the reporter's timestamp/category format. It filters interval, optional categories and WARN/ERR severity (severity filtering defaults on). It keeps complete newest matching lines within the byte budget. Partial final lines, continuation lines and oversized single lines are omitted. Files are not changed and logs are not cached. Context notes describe truncation and availability limits.
 
 Redaction occurs on JSON value strings before encoding, on user/assistant text before persistence, and again on outgoing input strings. Sensitive dictionary keys, known keys/secrets, OpenAI keys, Authorization/Bearer/Basic/Digest, JWTs, cookies, password/token assignments and escaped credential fields are masked. Network URLs are removed completely, including user info, paths, query and fragment, because they are unnecessary to explain therapy. The outer sanitized context remains valid JSON. Arbitrary encodings or identifiers in free text cannot be guaranteed safe: inspect the preview and leave logs off unless needed.
 
-The native ephemeral URLSession client posts only to `https://api.openai.com/v1/responses`, sets the key only in Authorization, disables cookies/cache, rejects redirects, caps download size, uses 90-second request / 120-second resource timeouts, propagates cancellation and does not automatically retry POSTs. It decodes Responses text/refusal blocks, rejects incomplete or empty output and reports sanitized API errors. No tool schema or generated action execution exists. Output is rendered as plain selectable text with no generated links, images or HTML.
+The native ephemeral URLSession client posts only to `https://api.openai.com/v1/responses`, sets the key only in Authorization, disables cookies/cache, rejects redirects, caps download size, uses 90-second request / 120-second resource timeouts, propagates cancellation and does not automatically retry POSTs. It decodes Responses text/refusal blocks, rejects incomplete or empty output and reports sanitized API errors. No tool schema or generated action execution exists. Assistant output uses native selectable attributed text with inline Markdown emphasis and preserved whitespace; user messages remain literal. The renderer copies only emphasis/code attributes into fresh text, so generated link, image and custom attributes cannot become interactive or load content. It falls back to literal text if parsing fails. This display-only formatting also applies to saved replies; stored messages are unchanged. Reference: [Apple's Markdown attributed-string documentation](https://developer.apple.com/documentation/foundation/instantiating-attributed-strings-with-markdown-syntax).
 
 ## File map
 
@@ -149,3 +173,12 @@ Selecting insulin/pump history also includes the latest **already stored** TDD s
 Pump history retains SMB/manual bolus flags, external insulin, temp basal programs, suspensions and resumptions. Bolus amounts are the latest recorded values, including partial-dose corrections when stored. The database does not preserve all finalization/delivery flags. Temp basal rate × scheduled duration is not proof of delivered units; a subsequent program or suspension may interrupt delivery. TDD is a timestamped daily estimate and must not be summed with event doses or presented as the total for the selected interval. Glucose history continues to include both raw and stored smoothed readings and timestamps.
 
 Expanded-context verification on 2026-09-11: **33 tests in 8 suites passed** (27 AI + 6 SettingsSearchTests), with a successful simulator build. Added regressions cover the missing bolus/meal parameters (first confirmed failing), therapy-category selection without implicit consent/enablement, overlapping adjustment history, stored TDD, and pump state crossing the selected cutoff. No physical-device or real OpenAI requests were used.
+
+## Automatic selection and chart explanation verification
+
+On 2026-09-11, the simulator test build passed with 42 tests in seven AI suites. Coverage includes inline Markdown emphasis and
+inert links/images, old configuration decoding, manual-mode persistence, automatic selection with no medical data in the planning
+request, category and seven-day bounds, cancellation before collection, local automatic preview, structured schema/output-budget
+transport, historical intervals, week-wide summaries, truncation notes, no duplicated records at chunk boundaries, separation of
+pump/external insulin and meal/FPU carbs, and the graph viewport question. Responses were mocked; no live OpenAI requests were
+made. On-device interaction and the quality of generated answers still require testing in the app.

@@ -45,14 +45,21 @@ struct AISettingsView: View {
             keySection
             modelSection
             Section("Context for Each Message") {
+                Toggle("Choose Data Automatically", isOn: setting(\.automaticallySelectContext))
+                if state.configuration.automaticallySelectContext {
+                    Text("AI selects the period and enabled categories needed for your question, up to 7 days. Longer periods use summaries. A short planning request is made before the answer.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Button("Select Therapy Context") {
                     state.configuration.selectTherapyContext()
                     state.saveConfiguration()
                 }
                 Text("Selects therapy settings, glucose, recorded insulin, carbs, determinations, overrides and temporary targets. Logs remain optional.")
                     .font(.caption).foregroundStyle(.secondary)
-                Picker("History Window", selection: setting(\.historyHours)) {
-                    ForEach(AIHistoryWindow.allCases) { window in Text("\(window.rawValue) hours").tag(window) }
+                if !state.configuration.automaticallySelectContext {
+                    Picker("History Window", selection: setting(\.historyHours)) {
+                        ForEach(AIHistoryWindow.allCases) { window in Text(window.title).tag(window) }
+                    }
                 }
                 ForEach(AIContextCategory.allCases) { category in
                     Toggle("Include \(category.title)", isOn: Binding(get: {
@@ -67,8 +74,9 @@ struct AISettingsView: View {
             }.listRowBackground(Color.chart)
             Section {
                 Toggle("Remote Conversation Continuity", isOn: setting(\.remoteContinuity))
+                    .disabled(state.configuration.automaticallySelectContext)
             } header: { Text("Optional OpenAI Storage") } footer: {
-                Text("Off by default. Enabling this requests storage of responses with OpenAI and uses previous response IDs. Local deletion does not delete remote data. Privacy changes start a new remote chain; previous local messages can still contain earlier shared facts.")
+                Text("Available in manual mode. Automatic selection uses a short local conversation history so earlier data snapshots do not accumulate. Enabling remote continuity requests storage with OpenAI; local deletion does not delete remote data.")
             }.listRowBackground(Color.chart)
             if let size = state.lastRequestBytes {
                 Section { Text("Last request: approximately \(size) bytes").font(.caption) }.listRowBackground(Color.chart)

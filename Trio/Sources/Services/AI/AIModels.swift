@@ -1,9 +1,12 @@
 import Foundation
 
 enum AIHistoryWindow: Int, Codable, CaseIterable, Identifiable {
-    case one = 1, three = 3, six = 6, twelve = 12, twentyFour = 24
+    case one = 1, three = 3, six = 6, twelve = 12, twentyFour = 24, twoDays = 48, threeDays = 72, sevenDays = 168
     var id: Int { rawValue }
+    var title: String { rawValue < 48 ? String(localized: "\(rawValue) hours") : String(localized: "\(rawValue / 24) days") }
 }
+
+enum AIContextMode: String, Codable { case automatic, manual }
 
 enum AIContextCategory: String, Codable, CaseIterable, Identifiable {
     case settings, glucose, pumpHistory, carbs, determinations, adjustments, logs
@@ -29,6 +32,12 @@ struct AIConfiguration: Codable, Equatable {
     var categories: Set<AIContextCategory> = []
     var warningsOnly = true
     var remoteContinuity = false
+    // Optional for archives created before automatic selection existed.
+    var contextMode: AIContextMode? = .automatic
+    var automaticallySelectContext: Bool {
+        get { contextMode != .manual }
+        set { contextMode = newValue ? .automatic : .manual }
+    }
     mutating func selectTherapyContext() {
         categories.formUnion([.settings, .glucose, .pumpHistory, .carbs, .determinations, .adjustments])
     }
@@ -185,11 +194,47 @@ struct TrioAIContext: Codable {
     var determinations: [AIDetermination] = []
     var logs: [AILogEntry] = []
     var notes: [String] = []
+    var intervalEnd: Date?
+    var hourlySummaries: [AIHistorySummary]?
+}
+
+/// Observations in one hour, never a calculation of delivered basal insulin or therapy advice.
+struct AIHistorySummary: Codable {
+    let start: Date
+    let end: Date
+    var glucose: Glucose?
+    var pump: Pump?
+    var carbs: Carbs?
+    var determinations: Determinations?
+
+    struct Glucose: Codable {
+        let count: Int
+        let first: Date
+        let last: Date
+        let minimumMgDL: Int
+        let maximumMgDL: Int
+        let meanMgDL: Double
+    }
+    struct Pump: Codable {
+        let eventCounts: [String: Int]
+        let recordedPumpBolusUnits: Decimal
+        let recordedExternalInsulinUnits: Decimal
+        let unclassifiedInsulinUnits: Decimal
+    }
+    struct Carbs: Codable {
+        let count: Int
+        let recordedMealGrams: Double
+        let recordedFPUGrams: Double
+    }
+    struct Determinations: Codable {
+        let count: Int
+        let enactedCount: Int
+    }
 }
 
 enum AIError: LocalizedError {
     case disabled, consentRequired, missingCredential, invalidModel, emptyMessage, busy, missingConversation
-    case persistence, invalidResponse, responseTooLarge, requestTooLarge, network, cancelled
+    case persistence, invalidResponse, responseTooLarge, requestTooLarge, network, cancelled, invalidContextPlan
     case api(status: Int, message: String)
 
     var errorDescription: String? {
@@ -207,6 +252,7 @@ enum AIError: LocalizedError {
         case .requestTooLarge: return "The request is too large. Select fewer data categories or a shorter window."
         case .network: return "Could not reach OpenAI. Check your connection and try again."
         case .cancelled: return "Request cancelled."
+        case .invalidContextPlan: return "Could not select the requested data within your sharing limits. Rephrase the question or turn off automatic data selection in AI Settings."
         case let .api(status, message): return "OpenAI (\(status)): \(message)"
         }
     }

@@ -39,6 +39,8 @@ extension Home {
         /// Span of history the chart arrays are fetched over; grows once to
         /// `maxChartHistorySeconds` when the user pans near the domain start.
         var endMarker = Date(timeIntervalSinceNow: TimeInterval(hours: 3))
+        // Read only when requesting an explanation; panning must not invalidate the whole dashboard.
+        @ObservationIgnored var aiChartVisibleInterval: DateInterval?
         var manualGlucose: [BloodGlucose] = []
         var uploadStats = false
         var recentGlucose: BloodGlucose?

@@ -36,6 +36,7 @@ extension Home {
         @State var showManualGlucose: Bool = false
         @State var showReleaseNotes: Bool = false
         @State var showAIChats = false
+        @State var aiInitialQuestion: String?
         @State var alarmsSnoozeUntil: Date = .distantPast
         @ObservedObject var releaseNotesService = ReleaseNotesService.shared
         // Pull-down-to-force-loop (see HomeRootView+Refresh.swift)
@@ -116,7 +117,8 @@ extension Home {
 
         @ViewBuilder private var chartInfoButton: some View {
             Button {
-                state.isLegendPresented.toggle()
+                aiInitialQuestion = AIChartQuestion.make(interval: state.aiChartVisibleInterval)
+                showAIChats = true
             } label: {
                 // styled to match the alarm bell pill in the meal row
                 Image(systemName: "info")
@@ -128,9 +130,12 @@ extension Home {
                         Circle()
                             .stroke(Color.primary.opacity(0.4), lineWidth: 2)
                     )
-                    .accessibilityLabel(Text("Chart legend"))
+                    .accessibilityLabel(Text("Explain this graph with AI"))
             }
             .buttonStyle(.plain)
+            .contextMenu {
+                Button("Chart legend", systemImage: "book") { state.isLegendPresented = true }
+            }
             .contentShape(Circle())
             .padding(.bottom, 6)
             // same trailing inset as the alarm bell in the meal row
@@ -242,9 +247,9 @@ extension Home {
             .sheet(isPresented: $state.isLegendPresented) {
                 ChartLegendView(state: state)
             }
-            .sheet(isPresented: $showAIChats) {
+            .sheet(isPresented: $showAIChats, onDismiss: { aiInitialQuestion = nil }) {
                 NavigationStack {
-                    AIAssistant.RootView(resolver: resolver)
+                    AIAssistant.RootView(resolver: resolver, initialQuestion: aiInitialQuestion)
                         .toolbar {
                             ToolbarItem(placement: .cancellationAction) {
                                 Button("Close") { showAIChats = false }

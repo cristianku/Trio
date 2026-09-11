@@ -5,6 +5,87 @@ import Swinject
 @testable import Trio
 
 @Suite("AI service consent and continuity", .serialized) @MainActor struct AIServiceTests {
+    @Test("Automatic preview is local and a no-data question does not read device records")
+    func noDataSelection() async throws {
+        let store = MemoryAIStore()
+        store.archive.configuration.enabled = true
+        store.archive.configuration.consentVersion = AIPrompt.consentVersion
+        store.archive.configuration.categories = [.settings, .glucose]
+        let client = AIPlanningClientFixture(plan: #"{"startHoursAgo":1,"endHoursAgo":0,"categories":[]}"#)
+        let service = DefaultAIService(store: store, builder: TrioAIContextBuilder(source: FailingAISource(), logs: EmptyAILogs()),
+                                       redactor: DefaultAIContextRedactor(), client: client)
+        let preview = try await service.previewContext()
+        #expect(preview.contains("168"))
+        #expect(client.requests.isEmpty)
+        let chat = try service.newConversation()
+        _ = try await service.send("What is a glucose sensor?", conversationID: chat.id)
+        #expect(client.requests.count == 2)
+        #expect(!client.requests[1].input.contains { $0.content.contains("glucoseMgDL") })
+    }
+
+    @Test("Cancelling planning prevents data collection and the answer request")
+    func cancelledPlanning() async throws {
+        let store = MemoryAIStore()
+        store.archive.configuration.enabled = true
+        store.archive.configuration.consentVersion = AIPrompt.consentVersion
+        let client = AIPlanningClientFixture(plan: "{}")
+        client.waitForCancellation = true
+        let builder = AIBuilderFixture()
+        let service = DefaultAIService(store: store, builder: builder, redactor: DefaultAIContextRedactor(), client: client)
+        let chat = try service.newConversation()
+        let task = Task { try await service.send("Explain", conversationID: chat.id) }
+        while client.requests.isEmpty { await Task.yield() }
+        task.cancel()
+        await #expect(throws: CancellationError.self) { try await task.value }
+        #expect(client.requests.count == 1)
+        #expect(builder.calls == 0)
+        #expect(store.archive.conversations[0].messages.isEmpty)
+    }
+
+    @Test("Automatic selection sends no medical snapshot to planning and only chosen data to answering")
+    func automaticSelection() async throws {
+        let store = MemoryAIStore()
+        let source = ContextSourceFixture(now: Date())
+        let builder = TrioAIContextBuilder(source: source, logs: EmptyAILogs())
+        let client = AIPlanningClientFixture(plan: #"{"startHoursAgo":1,"endHoursAgo":0,"categories":["settings"]}"#)
+        let service = DefaultAIService(store: store, builder: builder, redactor: DefaultAIContextRedactor(), client: client)
+        var config = AIConfiguration()
+        config.enabled = true
+        config.consentVersion = AIPrompt.consentVersion
+        config.categories = [.settings, .glucose]
+        config.remoteContinuity = true
+        try service.updateConfiguration(config)
+        let chat = try service.newConversation()
+        _ = try await service.send("Check my settings", conversationID: chat.id)
+        #expect(client.requests.count == 2)
+        #expect(client.requests[0].text != nil)
+        #expect(!client.requests[0].input.contains { $0.content.contains("glucoseMgDL") })
+        #expect(!client.requests[1].input.contains { $0.content.contains("glucoseMgDL") })
+        #expect(client.requests[1].input.contains { $0.content.contains("configuration") })
+        #expect(client.requests.allSatisfy { !$0.store && $0.previousResponseID == nil })
+        #expect(store.archive.conversations[0].messages.count == 2)
+    }
+
+    @Test("Invalid automatic plans cannot broaden sharing or trigger an answer request",
+          arguments: [#"{"startHoursAgo":169,"endHoursAgo":0,"categories":["glucose"]}"#,
+                      #"{"startHoursAgo":6,"endHoursAgo":7,"categories":["glucose"]}"#,
+                      #"{"startHoursAgo":6,"endHoursAgo":0,"categories":["logs"]}"#,
+                      "Not a JSON plan"])
+    func invalidSelection(plan: String) async throws {
+        let store = MemoryAIStore()
+        store.archive.configuration.enabled = true
+        store.archive.configuration.consentVersion = AIPrompt.consentVersion
+        store.archive.configuration.categories = [.glucose]
+        let client = AIPlanningClientFixture(plan: plan)
+        let builder = AIBuilderFixture()
+        let service = DefaultAIService(store: store, builder: builder, redactor: DefaultAIContextRedactor(), client: client)
+        let chat = try service.newConversation()
+        await #expect(throws: (any Error).self) { try await service.send("Check last night", conversationID: chat.id) }
+        #expect(client.requests.count == 1)
+        #expect(builder.calls == 0)
+        #expect(store.archive.conversations[0].messages.isEmpty)
+    }
+
     @Test("Each request uses the current app language, including remote conversation continuations",
           arguments: [false, true])
     func responseLanguage(remoteContinuity: Bool) async throws {
@@ -14,6 +95,7 @@ import Swinject
         let service = DefaultAIService(store: store, builder: AIBuilderFixture(), redactor: DefaultAIContextRedactor(),
                                        client: client, languageIdentifier: { appLanguage })
         var config = AIConfiguration()
+        config.automaticallySelectContext = false
         config.enabled = true
         config.consentVersion = AIPrompt.consentVersion
         config.remoteContinuity = remoteContinuity
@@ -49,8 +131,9 @@ import Swinject
         let client = AIClientFixture()
         let service = DefaultAIService(store: store, builder: builder, redactor: DefaultAIContextRedactor(), client: client)
         var config = AIConfiguration()
+        config.automaticallySelectContext = false
         config.enabled = true
-        config.consentVersion = 1
+        config.consentVersion = AIPrompt.consentVersion
         try service.updateConfiguration(config)
         let chat = try service.newConversation()
         _ = try await service.send("first", conversationID: chat.id)
@@ -69,8 +152,9 @@ import Swinject
 
     @Test("Failed context building and cancellation preserve the correct conversation draft") func retainedDraft() async throws {
         let store = MemoryAIStore()
+        store.archive.configuration.automaticallySelectContext = false
         store.archive.configuration.enabled = true
-        store.archive.configuration.consentVersion = 1
+        store.archive.configuration.consentVersion = AIPrompt.consentVersion
         let service = DefaultAIService(store: store, builder: FailingAIBuilder(), redactor: DefaultAIContextRedactor(), client: AIClientFixture())
         let container = Container()
         container.register(AIService.self) { _ in service }
@@ -95,8 +179,9 @@ import Swinject
         let client = AIClientFixture()
         let service = DefaultAIService(store: store, builder: AIBuilderFixture(), redactor: DefaultAIContextRedactor(), client: client)
         var config = AIConfiguration()
+        config.automaticallySelectContext = false
         config.enabled = true
-        config.consentVersion = 1
+        config.consentVersion = AIPrompt.consentVersion
         config.remoteContinuity = true
         try service.updateConfiguration(config)
         let chat = try service.newConversation()
@@ -119,13 +204,15 @@ import Swinject
         let store = MemoryAIStore()
         let client = AIClientFixture()
         let service = DefaultAIService(store: store, builder: SecretAIBuilder(), redactor: DefaultAIContextRedactor(), client: client)
+        store.archive.configuration.automaticallySelectContext = false
         let preview = try await service.previewContext()
         #expect(!preview.contains("contextSecret123"))
         #expect(preview.contains("REDACTED"))
         #expect(client.requests.isEmpty)
         var config = AIConfiguration()
+        config.automaticallySelectContext = false
         config.enabled = true
-        config.consentVersion = 1
+        config.consentVersion = AIPrompt.consentVersion
         config.categories = [.logs]
         try service.updateConfiguration(config)
         let chat = try service.newConversation()
@@ -142,8 +229,9 @@ import Swinject
         let secret = "sk-proj-privateFixture123"
         let service = DefaultAIService(store: store, builder: AIBuilderFixture(), redactor: DefaultAIContextRedactor(knownSecrets: { [secret] }), client: client)
         var config = AIConfiguration()
+        config.automaticallySelectContext = false
         config.enabled = true
-        config.consentVersion = 1
+        config.consentVersion = AIPrompt.consentVersion
         try service.updateConfiguration(config)
         let chat = try service.newConversation()
         _ = try await service.send("Explain \(secret)", conversationID: chat.id)
@@ -151,6 +239,22 @@ import Swinject
         let request = String(decoding: try JSONEncoder().encode(client.requests[0]), as: UTF8.self)
         #expect(!archive.contains(secret))
         #expect(!request.contains(secret))
+    }
+}
+
+final class AIPlanningClientFixture: OpenAIClient {
+    let plan: String
+    var requests: [OpenAIRequest] = []
+    var waitForCancellation = false
+    init(plan: String) { self.plan = plan }
+    func respond(to request: OpenAIRequest) async throws -> OpenAIResponse {
+        requests.append(request)
+        if waitForCancellation { try await Task.sleep(nanoseconds: 10_000_000_000) }
+        let text = request.text == nil ? "Explanation" : plan
+        let payload: [String: Any] = ["id": "resp_test", "status": "completed", "output": [
+            ["type": "message", "content": [["type": "output_text", "text": text]]]
+        ]]
+        return try JSONDecoder().decode(OpenAIResponse.self, from: JSONSerialization.data(withJSONObject: payload))
     }
 }
 

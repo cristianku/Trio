@@ -11,11 +11,48 @@ struct OpenAIRequest: Codable {
     let previousResponseID: String?
     let store: Bool
     var maxOutputTokens = 2000
+    var text: AIPlanTextFormat?
 
     enum CodingKeys: String, CodingKey {
-        case model, instructions, input, store
+        case model, instructions, input, store, text
         case previousResponseID = "previous_response_id"
         case maxOutputTokens = "max_output_tokens"
+    }
+}
+
+/// Fixed schema for a read-only selection. The model cannot supply queries, paths or actions.
+struct AIPlanTextFormat: Codable {
+    var format = Format()
+    struct Format: Codable {
+        var type = "json_schema"
+        var name = "trio_context_selection"
+        var strict = true
+        var schema = Schema()
+    }
+    struct Schema: Codable {
+        var type = "object"
+        var additionalProperties = false
+        var required = ["startHoursAgo", "endHoursAgo", "categories"]
+        var properties = Properties()
+    }
+    struct Properties: Codable {
+        var startHoursAgo = Hours()
+        var endHoursAgo = Hours()
+        var categories = Categories()
+    }
+    struct Hours: Codable {
+        var type = "number"
+        var minimum = 0
+        var maximum = 168
+    }
+    struct Categories: Codable {
+        var type = "array"
+        var items = Category()
+    }
+    struct Category: Codable {
+        var type = "string"
+        var values = AIContextCategory.allCases.map(\.rawValue)
+        enum CodingKeys: String, CodingKey { case type; case values = "enum" }
     }
 }
 
@@ -81,7 +118,8 @@ final class URLSessionOpenAIClient: NSObject, OpenAIClient, URLSessionTaskDelega
         // Sanitize every input again at the egress boundary. Keep protocol metadata out of semantic key filtering.
         let sanitized = OpenAIRequest(model: request.model, instructions: request.instructions,
                                       input: request.input.map { .init(role: $0.role, content: redactor.redact($0.content)) },
-                                      previousResponseID: request.previousResponseID, store: request.store)
+                                      previousResponseID: request.previousResponseID, store: request.store,
+                                      maxOutputTokens: request.maxOutputTokens, text: request.text)
         let body = try JSONEncoder().encode(sanitized)
         guard body.count <= AIContextLimits.requestBytes else { throw AIError.requestTooLarge }
         var urlRequest = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)

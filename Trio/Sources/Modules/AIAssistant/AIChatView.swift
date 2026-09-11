@@ -20,8 +20,7 @@ struct AIChatView: View {
                                     Spacer()
                                     Text(message.createdAt, style: .time).font(.caption).foregroundStyle(.secondary)
                                 }
-                                // Plain text: no generated links, remote images, HTML or executable actions.
-                                Text(verbatim: message.content).textSelection(.enabled)
+                                Text(AIMessageFormatting.content(message)).textSelection(.enabled)
                             }
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -46,8 +45,13 @@ struct AIChatView: View {
                     .textFieldStyle(.roundedBorder)
                     .disabled(state.isLoading)
                 HStack {
-                    Text("\(state.configuration.historyHours.rawValue) h • \(state.configuration.categories.count) data categories")
-                        .font(.caption).foregroundStyle(.secondary)
+                    Group {
+                        if state.configuration.automaticallySelectContext {
+                            Text("Automatic data • Up to 7 days")
+                        } else {
+                            Text("\(state.configuration.historyHours.rawValue) h • \(state.configuration.categories.count) data categories")
+                        }
+                    }.font(.caption).foregroundStyle(.secondary)
                     Spacer()
                     if state.isLoading {
                         Button("Cancel", role: .cancel) { state.cancel() }
@@ -64,5 +68,25 @@ struct AIChatView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { NavigationLink(destination: AISettingsView(state: state)) { Image(systemName: "gearshape") }.disabled(state.isLoading) }
         .onDisappear { state.cancel() }
+    }
+}
+
+enum AIMessageFormatting {
+    static func content(_ message: AIMessage) -> AttributedString {
+        guard message.role == .assistant,
+              let parsed = try? AttributedString(
+                  markdown: message.content,
+                  options: .init(allowsExtendedAttributes: false, interpretedSyntax: .inlineOnlyPreservingWhitespace)
+              )
+        else { return AttributedString(message.content) }
+
+        // Copy text and inline styling only: never retain link, image or custom attributes from model output.
+        var result = AttributedString()
+        for run in parsed.runs {
+            var text = AttributedString(String(parsed[run.range].characters))
+            text.inlinePresentationIntent = run.inlinePresentationIntent?.intersection([.emphasized, .stronglyEmphasized, .code])
+            result += text
+        }
+        return result
     }
 }

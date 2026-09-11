@@ -29,6 +29,23 @@ import Testing
         #expect(try response.answer() == "Explanation")
     }
 
+    @Test("Planning schema and output budget survive transport sanitization")
+    func planningSchema() async throws {
+        AIURLProtocolFixture.handler = { request in
+            let object = try! JSONSerialization.jsonObject(with: AIURLProtocolFixture.body(request)) as! [String: Any]
+            #expect(object["max_output_tokens"] as? Int == 1000)
+            let format = (object["text"] as? [String: Any])?["format"] as? [String: Any]
+            #expect(format?["type"] as? String == "json_schema")
+            #expect(format?["strict"] as? Bool == true)
+            #expect((format?["schema"] as? [String: Any])?["additionalProperties"] as? Bool == false)
+            return (200, Data(#"{"id":"plan","status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":"{}"}]}]}"#.utf8))
+        }
+        var planned = request
+        planned.text = AIPlanTextFormat()
+        planned.maxOutputTokens = 1000
+        _ = try await client().respond(to: planned)
+    }
+
     @Test("HTTP error details are decoded and sanitized without retry") func httpError() async throws {
         var calls = 0
         AIURLProtocolFixture.handler = { _ in

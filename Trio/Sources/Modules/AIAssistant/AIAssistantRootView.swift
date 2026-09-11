@@ -7,11 +7,14 @@ extension AIAssistant {
         @State private var selectedChat: UUID?
         @State private var renameID: UUID?
         @State private var renameTitle = ""
+        @State private var initialQuestionHandled = false
+        private let initialQuestion: String?
         @Environment(\.colorScheme) private var colorScheme
         @Environment(AppState.self) private var appState
 
-        init(resolver: Resolver) {
+        init(resolver: Resolver, initialQuestion: String? = nil) {
             _state = State(initialValue: StateModel(provider: Provider(resolver: resolver)))
+            self.initialQuestion = initialQuestion
         }
 
         var body: some View {
@@ -48,11 +51,33 @@ extension AIAssistant {
             .background(appState.trioBackgroundColor(for: colorScheme))
             .navigationTitle("AI Assistant")
             .navigationDestination(item: $selectedChat) { id in AIChatView(state: state, conversationID: id) }
+            .task {
+                guard !initialQuestionHandled, let initialQuestion else { return }
+                initialQuestionHandled = true
+                guard let id = state.newConversation() else { return }
+                state.setDraft(initialQuestion, for: id)
+                selectedChat = id
+                if state.isReady, state.configuration.enabled, state.configuration.hasConsent, state.hasKey {
+                    state.send(conversationID: id)
+                }
+            }
             .alert("Rename Conversation", isPresented: Binding(get: { renameID != nil }, set: { if !$0 { renameID = nil } })) {
                 TextField("Title", text: $renameTitle)
                 Button("Save") { if let id = renameID { state.rename(id, title: renameTitle) }; renameID = nil }
                 Button("Cancel", role: .cancel) { renameID = nil }
             }
         }
+    }
+}
+
+enum AIChartQuestion {
+    static func make(interval: DateInterval?) -> String {
+        let question = String(localized: "Explain this graph simply: what happened, what is happening now, and what is only a prediction?")
+        guard let interval else { return question }
+        let formatter = ISO8601DateFormatter()
+        formatter.timeZone = .current
+        return question + "\n" + String(localized: "Visible period:") + " "
+            + formatter.string(from: interval.start) + " – " + formatter.string(from: interval.end)
+            + " (" + TimeZone.current.identifier + ")"
     }
 }

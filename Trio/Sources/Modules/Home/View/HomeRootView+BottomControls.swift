@@ -785,6 +785,7 @@ extension Home.RootView {
 
     private var aiChatButton: some View {
         Button {
+            aiInitialQuestion = nil
             showAIChats = true
         } label: {
             Image(systemName: "bubble.left.and.bubble.right.fill")

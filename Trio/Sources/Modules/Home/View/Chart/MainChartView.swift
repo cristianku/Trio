@@ -176,9 +176,11 @@ struct MainChartView: View {
         }
         .onChange(of: scrollPosition) {
             updateRenderWindow()
+            updateAIChartInterval()
         }
         .onChange(of: visibleSeconds) {
             updateRenderWindow(force: true)
+            updateAIChartInterval()
         }
         .onChange(of: state.glucoseFromPersistence.last?.glucose) {
             state.updateStartEndMarkers()
@@ -200,12 +202,17 @@ struct MainChartView: View {
                 updateRenderWindow(force: true)
                 mainChartHasInitialized = true
             }
+            updateAIChartInterval()
         }
         // The chart is a custom gesture canvas VoiceOver cannot explore; give it a
         // spoken summary. (A full AXChartDescriptor audio graph is a follow-up that
         // needs on-device VoiceOver verification to avoid misrepresenting trends.)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(chartAccessibilitySummary))
+    }
+
+    private func updateAIChartInterval() {
+        state.aiChartVisibleInterval = DateInterval(start: scrollPosition, duration: visibleSeconds)
     }
 
     /// Spoken summary of the visible glucose: latest value and the min–max range.

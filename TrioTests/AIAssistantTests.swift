@@ -3,7 +3,64 @@ import Testing
 
 @testable import Trio
 
+@Suite("AI message formatting") struct AIMessageFormattingTests {
+    @Test("Assistant emphasis renders without losing paragraphs or glucose units")
+    func emphasis() throws {
+        let message = AIMessage(role: .assistant, content: "Glukoza **92 mg/dl**.\n\n- Trend *płaski*.\n- `IOB` to szacunek.")
+        let result = AIMessageFormatting.content(message)
+        #expect(String(result.characters) == "Glukoza 92 mg/dl.\n\n- Trend płaski.\n- IOB to szacunek.")
+        let bold = try #require(result.range(of: "92 mg/dl"))
+        #expect(result[bold].inlinePresentationIntent?.contains(.stronglyEmphasized) == true)
+        let italic = try #require(result.range(of: "płaski"))
+        #expect(result[italic].inlinePresentationIntent?.contains(.emphasized) == true)
+    }
+
+    @Test("Generated links and images have no interactive or image attributes")
+    func inertContent() {
+        let message = AIMessage(role: .assistant, content: "[**Settings**](https://example.org) ![image](https://example.org/image.png)")
+        let result = AIMessageFormatting.content(message)
+        #expect(!String(result.characters).contains("https://"))
+        #expect(String(result.characters).contains("Settings"))
+        for run in result.runs {
+            #expect(run.link == nil)
+            #expect(run.imageURL == nil)
+        }
+    }
+
+    @Test("User text and unmatched emphasis remain literal")
+    func literalContent() {
+        let user = AIMessage(role: .user, content: "**my text**\n2 * 3 < 10")
+        #expect(String(AIMessageFormatting.content(user).characters) == user.content)
+        #expect(AIMessageFormatting.content(user).runs.allSatisfy { $0.inlinePresentationIntent == nil })
+        let unfinished = AIMessage(role: .assistant, content: "Glucose **92 mg/dl")
+        #expect(String(AIMessageFormatting.content(unfinished).characters) == unfinished.content)
+    }
+}
+
 @Suite("AI privacy and persistence", .serialized) struct AIAssistantTests {
+    @Test("Older archives remain readable and manual selection persists")
+    func contextModeMigration() throws {
+        let old = #"{"enabled":true,"consentVersion":1,"model":"gpt-4.1-mini","historyHours":6,"categories":["glucose"],"warningsOnly":true,"remoteContinuity":false}"#
+        var config = try JSONDecoder().decode(AIConfiguration.self, from: Data(old.utf8))
+        #expect(config.automaticallySelectContext)
+        #expect(config.categories == [.glucose])
+        config.automaticallySelectContext = false
+        config.historyHours = .sevenDays
+        let restored = try JSONDecoder().decode(AIConfiguration.self, from: JSONEncoder().encode(config))
+        #expect(!restored.automaticallySelectContext)
+        #expect(restored.historyHours == .sevenDays)
+    }
+
+    @Test("Graph question includes the viewport interval, including the future forecast portion")
+    func graphQuestion() {
+        let interval = DateInterval(start: Date(timeIntervalSince1970: 1800000000), duration: 6 * 3600)
+        let formatter = ISO8601DateFormatter()
+        formatter.timeZone = .current
+        let question = AIChartQuestion.make(interval: interval)
+        #expect(question.contains(formatter.string(from: interval.start)))
+        #expect(question.contains(formatter.string(from: interval.end)))
+    }
+
     @Test("Medical sharing defaults off") func conservativeDefaults() throws {
         let settings = AIConfiguration()
         #expect(!settings.enabled)
