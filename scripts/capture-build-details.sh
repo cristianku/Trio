@@ -31,6 +31,17 @@ fi
 plutil -replace com-trio-branch -string "${git_branch_or_tag}" "${info_plist_path}"
 plutil -replace com-trio-commit-sha -string "${git_commit_sha}" "${info_plist_path}"
 
+# Independent fork source version. CI changes signing/build settings after
+# checkout, so it identifies committed source; local builds also mark dirtiness.
+if [ "${CI:-}" = "true" ]; then
+    set -- --committed
+else
+    set --
+fi
+fork_version=$(/usr/bin/python3 "${SRCROOT}/scripts/fork-version.py" --repo "${SRCROOT}" "$@")
+plutil -replace com-trio-fork-version -string "${fork_version}" "${info_plist_path}"
+echo "Trio AI ${fork_version}"
+
 # --- Submodule details ---
 # Remove an existing submodules key if it exists, then create an empty dictionary.
 # (Using PlistBuddy, which is available on macOS)

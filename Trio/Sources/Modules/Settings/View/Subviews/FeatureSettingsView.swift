@@ -21,6 +21,7 @@ struct FeatureSettingsView: BaseView {
             Section(
                 header: Text("Trio Features"),
                 content: {
+                    Text("AI Assistant").navigationLink(to: .aiAssistant, from: self)
                     Text("Treatments").navigationLink(to: .treatmentsSettings, from: self)
                     Text("Shortcuts").navigationLink(to: .shortcutsConfig, from: self)
                     Text("Remote Control").navigationLink(to: .remoteControlConfig, from: self)

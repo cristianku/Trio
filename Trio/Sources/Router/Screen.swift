@@ -5,6 +5,7 @@ enum Screen: Identifiable, Hashable {
     case loading
     case home
     case settings
+    case aiAssistant
     case configEditor(file: String)
     case nighscoutConfig
     case nighscoutConfigDirect
@@ -64,6 +65,8 @@ extension Screen {
             ProgressView()
         case .home:
             Home.RootView(resolver: resolver)
+        case .aiAssistant:
+            AIAssistant.RootView(resolver: resolver)
         case .settings:
             Settings.RootView(resolver: resolver)
         case let .configEditor(file):

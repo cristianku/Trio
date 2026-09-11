@@ -35,6 +35,10 @@ class BuildDetails: Injectable {
         "\(trioBranch) \(trioCommitSHA)"
     }
 
+    var forkVersion: String? {
+        dict["com-trio-fork-version"] as? String
+    }
+
     /// Returns a dictionary of submodule details.
     /// The keys are the submodule names, and the values are tuples (branch, commitSHA).
     var submodules: [String: (branch: String, commitSHA: String)] {

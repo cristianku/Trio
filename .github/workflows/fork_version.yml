@@ -1,0 +1,26 @@
+name: Trio AI Version
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Test fork versioning
+        run: python3 scripts/tests/test_fork_version.py
+
+      - name: Report source version
+        run: |
+          fork_version=$(python3 scripts/fork-version.py --committed)
+          printf '::notice title=Trio AI version::Trio AI %s\n' "$fork_version"
+          printf '### Trio AI %s\n\nCommit: `%s`\n' "$fork_version" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"

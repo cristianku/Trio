@@ -46,6 +46,7 @@ extension Notification.Name {
     // TODO: Remove static key after update "Use Dependencies" logic
     private static var assembler = Assembler([
         StorageAssembly(),
+        AIAssembly(),
         ServiceAssembly(),
         APSAssembly(),
         NetworkAssembly(),

@@ -204,9 +204,15 @@ jobs:
       - name: Checkout Repo for building
         uses: actions/checkout@v5
         with:
+          fetch-depth: 0 # Independent fork revision needs first-parent history.
           token: ${{ secrets.GH_PAT }}
           submodules: recursive
           ref: ${{ env.TARGET_BRANCH }}
+
+      - name: Show Trio AI source version
+        run: |
+          fork_version=$(python3 scripts/fork-version.py --committed)
+          printf '### Trio AI %s\n' "$fork_version" >> "$GITHUB_STEP_SUMMARY"
 
       # Customize Trio: Use patches or download and apply patches from GitHub
       - name: Customize Trio

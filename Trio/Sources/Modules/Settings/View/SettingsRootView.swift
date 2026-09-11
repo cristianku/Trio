@@ -143,12 +143,14 @@ extension Settings {
                     let devVersion = Bundle.main.appDevVersion ?? "unknown"
 
                     let buildNumber = Bundle.main.buildVersionNumber ?? String(localized: "Unknown")
+                    let forkVersion = buildDetails.forkVersion.map { "Trio AI \($0)" }
 
                     Section(
                         header: HStack(spacing: 4) {
                             Button {
                                 copyVersionInfo(
-                                    "Trio v\(devVersion) (\(buildNumber)) \(buildDetails.branchAndSha)"
+                                    [forkVersion, "Trio v\(devVersion) (\(buildNumber)) \(buildDetails.branchAndSha)"]
+                                        .compactMap { $0 }.joined(separator: "\n")
                                 )
                             } label: {
                                 Image(systemName: "doc.on.doc.fill")
@@ -168,8 +170,13 @@ extension Settings {
                                         .padding(.trailing, 10)
                                         .accessibilityHidden(true)
                                     VStack(alignment: .leading, spacing: 4) {
+                                        if let forkVersion {
+                                            Text(verbatim: forkVersion)
+                                                .font(.headline)
+                                                .textSelection(.enabled)
+                                        }
                                         Text("Trio v\(devVersion) (\(buildNumber))")
-                                            .font(.headline)
+                                            .font(forkVersion == nil ? .headline : .subheadline)
                                         if let expirationDate = buildDetails.calculateExpirationDate() {
                                             let formattedDate = DateFormatter.localizedString(
                                                 from: expirationDate,

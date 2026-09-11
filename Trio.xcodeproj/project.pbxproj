@@ -976,6 +976,30 @@
 		FE66D16B291F74F8005D6F77 /* Bundle+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE66D16A291F74F8005D6F77 /* Bundle+Extensions.swift */; };
 		7A11AC0DE000000000000030 /* UIHostingController+KeyboardSafeArea.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A11AC0DE000000000000130 /* UIHostingController+KeyboardSafeArea.swift */; };
 		FEFFA7A22929FE49007B8193 /* UIDevice+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEFFA7A12929FE49007B8193 /* UIDevice+Extensions.swift */; };
+		8FE9D0CC6B6638405E0A4440 /* AIAssistantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D95352DE1965FE8C4AC0EC9E /* AIAssistantTests.swift */; };
+		26A1305BB0B23FD4E6F00BBE /* AIContextBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5497E5C660C493E50A1328 /* AIContextBuilder.swift */; };
+		DB4400B97C834873373A9F68 /* AIContextRedactor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11409A56928F3022BD3C0296 /* AIContextRedactor.swift */; };
+		2A50E680F491447FF43D9616 /* AIConversationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B277677B0B404BF291A7051 /* AIConversationStore.swift */; };
+		762AC377E22C8AE78F9CF601 /* AICredentialProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7948927E5F72242A01182C6 /* AICredentialProvider.swift */; };
+		712C2F47FB9F4DACB06B8924 /* AILogReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67BC46581E17FDF192F9F150 /* AILogReader.swift */; };
+		422B1FC5F31A9749F72BFF1F /* AIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E50AE980F579971C9A5C7DF /* AIModels.swift */; };
+		A01B2710C96C8C4120138F64 /* AIPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68CD9DF70AB9FA80151AD83C /* AIPrompt.swift */; };
+		34EC7F177A563574856EF14F /* AISettingsSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD7ADD92BE267D6D26D9E5E /* AISettingsSnapshot.swift */; };
+		B7FBBC7AF5CC1FC7577C9EF2 /* OpenAIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A11B362B6C18BA28B6B000 /* OpenAIClient.swift */; };
+		C7F87CCE9D37A5B227185886 /* TrioAIDataReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BEF3EEE4CCD1B2BCDA47A00 /* TrioAIDataReader.swift */; };
+		7E56A7223F3C02BBF1053C9E /* AIContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2D6E1D57DFCC07E4EBBEB28 /* AIContextTests.swift */; };
+		F4C6DC4A08C851CBAD09388A /* AIOpenAIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17B0363678DC7650332AF5C4 /* AIOpenAIClientTests.swift */; };
+		E57E1B51A9F98960213BAF94 /* AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E36484D246CA34F9908395 /* AIService.swift */; };
+		3A019136C62D81CB4E1839C4 /* AIAssistantProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A70EBE1412F56FA9D397820 /* AIAssistantProvider.swift */; };
+		780658B92F5976629615351E /* AIAssistantRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5844BACA526C647481F11E8B /* AIAssistantRootView.swift */; };
+		9F26D1A02F89DCD4D704BEC8 /* AIAssistantStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 347ED9570B72B3ACC4434252 /* AIAssistantStateModel.swift */; };
+		746711697018B7FD70CBE8A3 /* AIChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE94C3BB9F239EBDE080A595 /* AIChatView.swift */; };
+		E8A0A10CE3741A6817E3ECB8 /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A729FA96B7A3831CB4E1C70B /* AISettingsView.swift */; };
+		06D451FF1ECB012846027876 /* AIServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC906B7CB61C77CACCFDE7A /* AIServiceTests.swift */; };
+		F4A286473DB51BEBC456F0C4 /* AIAssembly.swift in Sources */ = {isa = PBXBuildFile; fileRef = B566011F54F7DDD00A6B2DF6 /* AIAssembly.swift */; };
+		2FBD0D8630AAA4BE2742F30D /* AICredentialTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B1CE5F14431640E59932FA3 /* AICredentialTests.swift */; };
+		ED752EDEA2D3BB6F6EB36B8D /* AIDataReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1901D7530A34DE591B67F89 /* AIDataReaderTests.swift */; };
+		8FED26D225E68E1B56BFC4AC /* AITransportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A056221C06398BC9BDED053 /* AITransportTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -2044,6 +2068,30 @@
 		FE66D16A291F74F8005D6F77 /* Bundle+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Extensions.swift"; sourceTree = "<group>"; };
 		7A11AC0DE000000000000130 /* UIHostingController+KeyboardSafeArea.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIHostingController+KeyboardSafeArea.swift"; sourceTree = "<group>"; };
 		FEFFA7A12929FE49007B8193 /* UIDevice+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIDevice+Extensions.swift"; sourceTree = "<group>"; };
+		D95352DE1965FE8C4AC0EC9E /* AIAssistantTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioTests/AIAssistantTests.swift"; sourceTree = SOURCE_ROOT; };
+		4E5497E5C660C493E50A1328 /* AIContextBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/AIContextBuilder.swift"; sourceTree = SOURCE_ROOT; };
+		11409A56928F3022BD3C0296 /* AIContextRedactor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/AIContextRedactor.swift"; sourceTree = SOURCE_ROOT; };
+		6B277677B0B404BF291A7051 /* AIConversationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/AIConversationStore.swift"; sourceTree = SOURCE_ROOT; };
+		A7948927E5F72242A01182C6 /* AICredentialProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/AICredentialProvider.swift"; sourceTree = SOURCE_ROOT; };
+		67BC46581E17FDF192F9F150 /* AILogReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/AILogReader.swift"; sourceTree = SOURCE_ROOT; };
+		8E50AE980F579971C9A5C7DF /* AIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/AIModels.swift"; sourceTree = SOURCE_ROOT; };
+		68CD9DF70AB9FA80151AD83C /* AIPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/AIPrompt.swift"; sourceTree = SOURCE_ROOT; };
+		9FD7ADD92BE267D6D26D9E5E /* AISettingsSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/AISettingsSnapshot.swift"; sourceTree = SOURCE_ROOT; };
+		A3A11B362B6C18BA28B6B000 /* OpenAIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/OpenAIClient.swift"; sourceTree = SOURCE_ROOT; };
+		5BEF3EEE4CCD1B2BCDA47A00 /* TrioAIDataReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/TrioAIDataReader.swift"; sourceTree = SOURCE_ROOT; };
+		B2D6E1D57DFCC07E4EBBEB28 /* AIContextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioTests/AIContextTests.swift"; sourceTree = SOURCE_ROOT; };
+		17B0363678DC7650332AF5C4 /* AIOpenAIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioTests/AIOpenAIClientTests.swift"; sourceTree = SOURCE_ROOT; };
+		48E36484D246CA34F9908395 /* AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Services/AI/AIService.swift"; sourceTree = SOURCE_ROOT; };
+		6A70EBE1412F56FA9D397820 /* AIAssistantProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Modules/AIAssistant/AIAssistantProvider.swift"; sourceTree = SOURCE_ROOT; };
+		5844BACA526C647481F11E8B /* AIAssistantRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Modules/AIAssistant/AIAssistantRootView.swift"; sourceTree = SOURCE_ROOT; };
+		347ED9570B72B3ACC4434252 /* AIAssistantStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Modules/AIAssistant/AIAssistantStateModel.swift"; sourceTree = SOURCE_ROOT; };
+		FE94C3BB9F239EBDE080A595 /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Modules/AIAssistant/AIChatView.swift"; sourceTree = SOURCE_ROOT; };
+		A729FA96B7A3831CB4E1C70B /* AISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Modules/AIAssistant/AISettingsView.swift"; sourceTree = SOURCE_ROOT; };
+		CEC906B7CB61C77CACCFDE7A /* AIServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioTests/AIServiceTests.swift"; sourceTree = SOURCE_ROOT; };
+		B566011F54F7DDD00A6B2DF6 /* AIAssembly.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Trio/Sources/Assemblies/AIAssembly.swift"; sourceTree = SOURCE_ROOT; };
+		0B1CE5F14431640E59932FA3 /* AICredentialTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioTests/AICredentialTests.swift"; sourceTree = SOURCE_ROOT; };
+		C1901D7530A34DE591B67F89 /* AIDataReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioTests/AIDataReaderTests.swift"; sourceTree = SOURCE_ROOT; };
+		1A056221C06398BC9BDED053 /* AITransportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TrioTests/AITransportTests.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -2868,6 +2916,7 @@
 				BDFF7AA02D25FAA80016C40C /* Trio Watch App Tests */,
 				DD09D6492D2B6253000D82C9 /* Trio Watch Complication */,
 				38FCF3EE25E9028E0078B0D1 /* TrioTests */,
+				F747483F4FFF1C32B884045E /* AI Assistant */,
 			);
 			sourceTree = "<group>";
 		};
@@ -4760,6 +4809,37 @@
 			path = QuickPickTreatments;
 			sourceTree = "<group>";
 		};
+		F747483F4FFF1C32B884045E /* AI Assistant */ = {
+			isa = PBXGroup;
+			children = (
+				1A056221C06398BC9BDED053 /* AITransportTests.swift */,
+				C1901D7530A34DE591B67F89 /* AIDataReaderTests.swift */,
+				0B1CE5F14431640E59932FA3 /* AICredentialTests.swift */,
+				B566011F54F7DDD00A6B2DF6 /* AIAssembly.swift */,
+				CEC906B7CB61C77CACCFDE7A /* AIServiceTests.swift */,
+				A729FA96B7A3831CB4E1C70B /* AISettingsView.swift */,
+				FE94C3BB9F239EBDE080A595 /* AIChatView.swift */,
+				347ED9570B72B3ACC4434252 /* AIAssistantStateModel.swift */,
+				5844BACA526C647481F11E8B /* AIAssistantRootView.swift */,
+				6A70EBE1412F56FA9D397820 /* AIAssistantProvider.swift */,
+				48E36484D246CA34F9908395 /* AIService.swift */,
+				17B0363678DC7650332AF5C4 /* AIOpenAIClientTests.swift */,
+				B2D6E1D57DFCC07E4EBBEB28 /* AIContextTests.swift */,
+				5BEF3EEE4CCD1B2BCDA47A00 /* TrioAIDataReader.swift */,
+				A3A11B362B6C18BA28B6B000 /* OpenAIClient.swift */,
+				9FD7ADD92BE267D6D26D9E5E /* AISettingsSnapshot.swift */,
+				68CD9DF70AB9FA80151AD83C /* AIPrompt.swift */,
+				8E50AE980F579971C9A5C7DF /* AIModels.swift */,
+				67BC46581E17FDF192F9F150 /* AILogReader.swift */,
+				A7948927E5F72242A01182C6 /* AICredentialProvider.swift */,
+				6B277677B0B404BF291A7051 /* AIConversationStore.swift */,
+				11409A56928F3022BD3C0296 /* AIContextRedactor.swift */,
+				4E5497E5C660C493E50A1328 /* AIContextBuilder.swift */,
+				D95352DE1965FE8C4AC0EC9E /* AIAssistantTests.swift */,
+			);
+			name = "AI Assistant";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -5165,6 +5245,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4A286473DB51BEBC456F0C4 /* AIAssembly.swift in Sources */,
+				E8A0A10CE3741A6817E3ECB8 /* AISettingsView.swift in Sources */,
+				746711697018B7FD70CBE8A3 /* AIChatView.swift in Sources */,
+				9F26D1A02F89DCD4D704BEC8 /* AIAssistantStateModel.swift in Sources */,
+				780658B92F5976629615351E /* AIAssistantRootView.swift in Sources */,
+				3A019136C62D81CB4E1839C4 /* AIAssistantProvider.swift in Sources */,
+				E57E1B51A9F98960213BAF94 /* AIService.swift in Sources */,
+				C7F87CCE9D37A5B227185886 /* TrioAIDataReader.swift in Sources */,
+				B7FBBC7AF5CC1FC7577C9EF2 /* OpenAIClient.swift in Sources */,
+				34EC7F177A563574856EF14F /* AISettingsSnapshot.swift in Sources */,
+				A01B2710C96C8C4120138F64 /* AIPrompt.swift in Sources */,
+				422B1FC5F31A9749F72BFF1F /* AIModels.swift in Sources */,
+				712C2F47FB9F4DACB06B8924 /* AILogReader.swift in Sources */,
+				762AC377E22C8AE78F9CF601 /* AICredentialProvider.swift in Sources */,
+				2A50E680F491447FF43D9616 /* AIConversationStore.swift in Sources */,
+				DB4400B97C834873373A9F68 /* AIContextRedactor.swift in Sources */,
+				26A1305BB0B23FD4E6F00BBE /* AIContextBuilder.swift in Sources */,
 				DD5DC9F12CF3D97C00AB8703 /* AdjustmentsStateModel+Overrides.swift in Sources */,
 				3811DE2325C9D48300A708ED /* MainDataFlow.swift in Sources */,
 				C2A0A42F2CE03131003B98E8 /* ConstantValues.swift in Sources */,
@@ -5909,6 +6006,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8FED26D225E68E1B56BFC4AC /* AITransportTests.swift in Sources */,
+				ED752EDEA2D3BB6F6EB36B8D /* AIDataReaderTests.swift in Sources */,
+				2FBD0D8630AAA4BE2742F30D /* AICredentialTests.swift in Sources */,
+				06D451FF1ECB012846027876 /* AIServiceTests.swift in Sources */,
+				F4C6DC4A08C851CBAD09388A /* AIOpenAIClientTests.swift in Sources */,
+				7E56A7223F3C02BBF1053C9E /* AIContextTests.swift in Sources */,
+				8FE9D0CC6B6638405E0A4440 /* AIAssistantTests.swift in Sources */,
 				3B5CD2C92D4AECD500CE213C /* ProfileCarbsTests.swift in Sources */,
 				3BEDC9932EEB27B600AC6492 /* IobConsecutiveEventsTests.swift in Sources */,
 				3B1DB90F2E63C14C00BD814B /* DetermineBasalLowEventualGlucoseTests.swift in Sources */,

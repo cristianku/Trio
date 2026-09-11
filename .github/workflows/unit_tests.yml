@@ -106,7 +106,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
-          fetch-depth: 1
+          fetch-depth: 0 # BuildDetails captures the independent fork revision.
           submodules: recursive
 
       # Fingerprint dependency state (independent of app source) for the cache
