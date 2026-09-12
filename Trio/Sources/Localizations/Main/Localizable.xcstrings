@@ -28346,138 +28346,138 @@
         }
       }
     },
-    "Activate the override linked to an activity. Configure an Apple Watch Workout automation in Shortcuts first." : {
+    "Activate the override linked to an activity. Configure a workout automation in Shortcuts first." : {
       "localizations" : {
         "bg" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Активирайте отмяната, свързана с дейност. Първо настройте автоматизация за тренировка с Apple Watch в Shortcuts."
+            "value" : "Активирайте отмяната, свързана с дейност. Първо настройте автоматизация за тренировка в Shortcuts."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aktivujte profil propojený s aktivitou. Nejprve ve Zkratkách nastavte automatizaci Cvičení na Apple Watch."
+            "value" : "Aktivujte profil propojený s aktivitou. Nejprve ve Zkratkách nastavte automatizaci Cvičení."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aktivér den tilsidesættelse, der er knyttet til en aktivitet. Opret først en automatisering for Apple Watch-træning i Genveje."
+            "value" : "Aktivér den tilsidesættelse, der er knyttet til en aktivitet. Opret først en automatisering for træning i Genveje."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aktiviere den mit einer Aktivität verknüpften Override. Richte zuerst eine Automation für Apple Watch-Training in Kurzbefehle ein."
+            "value" : "Aktiviere den mit einer Aktivität verknüpften Override. Richte zuerst eine Automation für Training in Kurzbefehle ein."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activate the override linked to an activity. Configure an Apple Watch Workout automation in Shortcuts first."
+            "value" : "Activate the override linked to an activity. Configure a workout automation in Shortcuts first."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activa la anulación vinculada a una actividad. Primero configura una automatización Entreno del Apple Watch en Atajos."
+            "value" : "Activa la anulación vinculada a una actividad. Primero configura una automatización Entreno en Atajos."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activez la dérogation liée à une activité. Configurez d’abord une automatisation Exercice Apple Watch dans Raccourcis."
+            "value" : "Activez la dérogation liée à une activité. Configurez d’abord une automatisation Exercice dans Raccourcis."
           }
         },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "הפעלת ה-Override המקושר לפעילות. תחילה יש להגדיר אוטומציה של אימון Apple Watch ב״קיצורים״."
+            "value" : "הפעלת ה-Override המקושר לפעילות. תחילה יש להגדיר אוטומציה של אימון ב״קיצורים״."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Attiva il programma collegato a un’attività. Configura prima un’automazione Allenamento di Apple Watch in Comandi Rapidi."
+            "value" : "Attiva il programma collegato a un’attività. Configura prima un’automazione Allenamento in Comandi Rapidi."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "활동에 연결된 오버라이드를 활성화합니다. 먼저 단축어에서 Apple Watch 운동 자동화를 설정하세요."
+            "value" : "활동에 연결된 오버라이드를 활성화합니다. 먼저 단축어에서 운동 자동화를 설정하세요."
           }
         },
         "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aktiver justeringen som er koblet til en aktivitet. Konfigurer først en automatisering for Apple Watch-trening i Snarveier."
+            "value" : "Aktiver justeringen som er koblet til en aktivitet. Konfigurer først en automatisering for trening i Snarveier."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activeer de overschrijving die aan een activiteit is gekoppeld. Configureer eerst een automatisering voor Apple Watch-workouts in Opdrachten."
+            "value" : "Activeer de overschrijving die aan een activiteit is gekoppeld. Configureer eerst een automatisering voor workouts in Opdrachten."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aktywuj nadpisanie powiązane z aktywnością. Najpierw skonfiguruj w Skrótach automatyzację treningu Apple Watch."
+            "value" : "Aktywuj nadpisanie powiązane z aktywnością. Najpierw skonfiguruj w Skrótach automatyzację treningu."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ative a substituição ligada a uma atividade. Configure primeiro uma automatização de treino do Apple Watch em Atalhos."
+            "value" : "Ative a substituição ligada a uma atividade. Configure primeiro uma automatização de treino em Atalhos."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activați override-ul legat de o activitate. Configurați mai întâi o automatizare pentru antrenament Apple Watch în Scurtături."
+            "value" : "Activați override-ul legat de o activitate. Configurați mai întâi o automatizare pentru antrenament în Scurtături."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Активируйте переопределение, связанное с занятием. Сначала настройте автоматизацию тренировки Apple Watch в приложении «Команды»."
+            "value" : "Активируйте переопределение, связанное с занятием. Сначала настройте автоматизацию тренировки в приложении «Команды»."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aktivera den override som är kopplad till en aktivitet. Ställ först in en automatisering för Apple Watch-träning i Genvägar."
+            "value" : "Aktivera den override som är kopplad till en aktivitet. Ställ först in en automatisering för träning i Genvägar."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bir etkinliğe bağlı override’ı etkinleştirin. Önce Kestirmeler’de bir Apple Watch Antrenmanı otomasyonu ayarlayın."
+            "value" : "Bir etkinliğe bağlı override’ı etkinleştirin. Önce Kestirmeler’de bir antrenman otomasyonu ayarlayın."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Активуйте перевизначення, пов’язане з активністю. Спочатку налаштуйте автоматизацію тренування Apple Watch у програмі «Швидкі команди»."
+            "value" : "Активуйте перевизначення, пов’язане з активністю. Спочатку налаштуйте автоматизацію тренування у програмі «Швидкі команди»."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kích hoạt ghi đè được liên kết với một hoạt động. Trước tiên, hãy thiết lập tự động hóa Bài tập Apple Watch trong Phím tắt."
+            "value" : "Kích hoạt ghi đè được liên kết với một hoạt động. Trước tiên, hãy thiết lập tự động hóa Bài tập trong Phím tắt."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "激活与活动关联的覆盖设置。请先在“快捷指令”中配置 Apple Watch 体能训练自动化。"
+            "value" : "激活与活动关联的覆盖设置。请先在“快捷指令”中配置体能训练自动化。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "啟用與活動連結的覆蓋設定。請先在「捷徑」中設定 Apple Watch 體能訓練自動化。"
+            "value" : "啟用與活動連結的覆蓋設定。請先在「捷徑」中設定體能訓練自動化。"
           }
         }
       }

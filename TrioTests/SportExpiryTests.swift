@@ -96,7 +96,7 @@ import Testing
         }
     }
 
-    @Test("Expired sport never reveals an older expired manual override")  func expiredSportDoesNotRestoreExpiredManual() async throws {
+    @Test("Expired sport never reveals an older expired manual override") func expiredSportDoesNotRestoreExpiredManual() async throws {
         let stack = try await CoreDataStack.createForTests()
         let context = stack.newTaskContext()
         await context.perform {

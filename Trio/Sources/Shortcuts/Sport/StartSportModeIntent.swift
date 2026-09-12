@@ -5,7 +5,7 @@ struct StartSportModeIntent: AppIntent {
     static var title: LocalizedStringResource = "Start Sport in Trio"
     static var description =
         IntentDescription(
-            "Activate the override linked to an activity. Configure an Apple Watch Workout automation in Shortcuts first."
+            "Activate the override linked to an activity. Configure a workout automation in Shortcuts first."
         )
     static var openAppWhenRun = false
 
